@@ -1,0 +1,58 @@
+package com.owuor.educue.students.entity;
+
+import com.owuor.educue.admissions.entity.Application;
+import com.owuor.educue.admissions.entity.Intake;
+import com.owuor.educue.users.entity.User;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.time.LocalDateTime;
+
+// MINIMAL PLACEHOLDER - expand with guardian info, national ID, date of
+// birth, status (active/suspended/graduated/discontinued), FK back to
+// originating Application, etc. when we build full Admissions.
+@Entity
+@Table(name = "students")
+@Getter
+@Setter
+@NoArgsConstructor
+public class Student {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = "admission_number", nullable = false, unique = true, length = 30)
+    private String admissionNumber;
+
+    @Column(name = "full_name", nullable = false, length = 150)
+    private String fullName;
+
+    @Column(length = 150)
+    private String email;
+
+    @Column(length = 20)
+    private String phone;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "application_id",
+            nullable = false,
+            unique = true
+    )
+
+    private Application application;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "user_id",
+            unique = true
+    )
+    private User user;
+
+}
