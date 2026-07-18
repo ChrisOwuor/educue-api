@@ -8,9 +8,8 @@ import lombok.Setter;
 public class StudentResultFilterRequest {
     private String search;
     private Long courseId;
-    private Long curriculumId;
-    private Long semesterId;
-    private Long semesterUnitId;
+    private Long courseAcademicPeriodId;
+    private Long courseUnitPlacementId;
     private String status;   // matches StudentResult.ResultStatus name
     private Boolean passed;
 }

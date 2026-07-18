@@ -1,6 +1,5 @@
 package com.owuor.educue.students.dto;
 
-import com.owuor.educue.academics.entity.Semester;
 import lombok.*;
 
 @Getter
@@ -14,9 +13,9 @@ public class StudentPromotionRowResponse {
 
     private String admissionNumber;
 
-    private String semester;
+    private String academicPeriod;
 
-    private int mandatoryUnits;
+    private int coreUnits;
 
     private int registeredUnits;
 
@@ -26,7 +25,7 @@ public class StudentPromotionRowResponse {
 
     private String status;
 
-    private String currentSemester;
+    private String currentAcademicPeriod;
 
-    private int passedMandatoryUnits;
+    private int passedCoreUnits;
 }

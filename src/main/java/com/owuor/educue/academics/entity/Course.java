@@ -1,5 +1,7 @@
 package com.owuor.educue.academics.entity;
 
+import com.owuor.educue.academics.enums.QualificationType;
+import com.owuor.educue.academics.enums.StudyMode;
 import com.owuor.educue.institution.entity.Department;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -40,8 +42,6 @@ public class Course {
     @Column(nullable = false, length = 10)
     private String durationUnit; // MONTHS | YEARS | WEEKS
 
-    @Column(name = "total_semesters", nullable = false)
-    private Integer totalSemesters;
 
     @Column(nullable = false)
     private boolean active = true;
@@ -67,4 +67,23 @@ public class Course {
     public void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
+    //==== ADDED FIELDS===//
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private QualificationType qualificationType;
+
+    @Enumerated(EnumType.STRING)
+    private StudyMode studyMode;
+
+    @Column(name = "total_credits")
+    private Integer totalCredits;
+
+    @Version
+    private Long version;
+
+    @Column(name = "award_title", length = 150)
+    private String awardTitle;
+
+
 }

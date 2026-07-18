@@ -4,6 +4,7 @@ import com.owuor.educue.auth.jwt.JwtAuthFilter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -49,9 +50,26 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/auth/login", "/api/applications", "/api/applications/*/documents").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/intakes/open").permitAll()
-                        .requestMatchers("/api/payments/mpesa/callback").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/login",
+                                "/api/applications",
+                                "/api/applications/*/documents"
+                        ).permitAll()
+
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/intakes/open",
+                                "/api/public/exam-cards/*"
+                        ).permitAll()
+
+                        .requestMatchers("/api/payments/mpesa/callback/**")
+                        .permitAll()
+                        .requestMatchers("/api/payments/mpesa/stk/**")
+                        .permitAll()
+
+                        // Actuator endpoints for Prometheus
+                        .requestMatchers("/actuator/health", "/actuator/prometheus")
+                        .permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,10 +1,8 @@
 package com.owuor.educue.students.service;
 
-import com.owuor.educue.academics.entity.Semester;
-import com.owuor.educue.academics.entity.SemesterUnit;
+import com.owuor.educue.academics.entity.CourseAcademicPeriod;
+import com.owuor.educue.academics.enums.UnitType;
 import com.owuor.educue.academics.enums.RegistrationStatus;
-import com.owuor.educue.admissions.entity.Application;
-import com.owuor.educue.finance.dto.ChargeStudentRequest;
 import com.owuor.educue.finance.entity.FeeStructure;
 import com.owuor.educue.finance.repository.FeeStructureRepository;
 import com.owuor.educue.finance.service.FeeLedgerService;
@@ -64,24 +62,24 @@ public class StudentPromotionService {
 
         List<StudentUnitRegistration> registrations =
                 registrationRepository
-                        .findByEnrollmentIdAndSemesterUnitSemesterIdAndStatus(
+                        .findByEnrollmentIdAndCourseUnitPlacementCourseAcademicPeriodIdAndStatus(
                                 enrollment.getId(),
-                                enrollment.getCurrentSemester().getId(),
+                                enrollment.getCurrentCourseAcademicPeriod().getId(),
                                 RegistrationStatus.ACTIVE
                         );
 
         int registeredUnits = registrations.size();
 
-        int mandatoryUnits = (int) registrations.stream()
-                .map(StudentUnitRegistration::getSemesterUnit)
-                .filter(SemesterUnit::isMandatory)
+        int coreUnits = (int) registrations.stream()
+                .map(StudentUnitRegistration::getCourseUnitPlacement)
+                .filter(placement -> placement.getUnitType() == UnitType.CORE)
                 .count();
 
-        int passedMandatoryUnits = 0;
+        int passedCoreUnits = 0;
 
         for (StudentUnitRegistration registration : registrations) {
 
-            if (!registration.getSemesterUnit().isMandatory()) {
+            if (registration.getCourseUnitPlacement().getUnitType() != UnitType.CORE) {
                 continue;
             }
 
@@ -96,20 +94,20 @@ public class StudentPromotionService {
                 && result.isPassed()
                 && result.getStatus() == ResultStatus.APPROVED) {
 
-                passedMandatoryUnits++;
+                passedCoreUnits++;
             }
         }
 
         boolean eligible =
                 registeredUnits > 0
-                && mandatoryUnits == passedMandatoryUnits;
+                && coreUnits == passedCoreUnits;
 
         String reason;
 
         if (registeredUnits == 0) {
             reason = "Not Registered";
         } else if (!eligible) {
-            reason = "Pending Mandatory Units";
+            reason = "Pending Core Units";
         } else {
             reason = "Eligible for Promotion";
         }
@@ -118,10 +116,10 @@ public class StudentPromotionService {
                 .enrollmentId(enrollment.getId())
                 .studentName(enrollment.getStudent().getFullName())
                 .admissionNumber(enrollment.getStudent().getAdmissionNumber())
-                .currentSemester(enrollment.getCurrentSemester().getName())
+                .currentAcademicPeriod(enrollment.getCurrentCourseAcademicPeriod().getAcademicPeriod().getName())
                 .registeredUnits(registeredUnits)
-                .mandatoryUnits(mandatoryUnits)
-                .passedMandatoryUnits(passedMandatoryUnits)
+                .coreUnits(coreUnits)
+                .passedCoreUnits(passedCoreUnits)
                 .eligible(eligible)
                 .status(reason)
                 .build();
@@ -140,54 +138,45 @@ public class StudentPromotionService {
                 continue;
             }
 
-            Semester current = enrollment.getCurrentSemester();
-            Semester next = current.getNextSemester();
+            CourseAcademicPeriod current = enrollment.getCurrentCourseAcademicPeriod();
+            CourseAcademicPeriod next = current.getNextPeriod();
 
             if (next == null) {
                 continue; // Student has completed the programme
             }
 
-            enrollment.setCurrentSemester(next);
-
-            Application application = enrollment.getStudent().getApplication();
+            enrollment.setCurrentCourseAcademicPeriod(next);
 
             FeeStructure feeStructure = feeStructureRepository
-                    .findByIntakeIdAndCourseIdAndSemesterId(
-                            application.getIntake().getId(),
-                            enrollment.getCourse().getId(),
-                            next.getId()
-                    )
+                    .findByIntakeCourseIdAndCourseAcademicPeriodId(
+                            enrollment.getIntakeCourse().getId(), next.getId())
                     .orElseThrow(() ->
                             new RuntimeException("Fee structure not found."));
 
-            ChargeStudentRequest chargeStudentRequest = new ChargeStudentRequest();
-            chargeStudentRequest.setStudentId(enrollment.getStudent().getId());
-            chargeStudentRequest.setFeeStructureId(feeStructure.getId());
-
-            feeLedgerService.chargeStudent(chargeStudentRequest);
+            feeLedgerService.billEnrollmentPeriod(enrollment.getStudent(), feeStructure);
         }
     }
 
     private boolean isEligibleForPromotion(Enrollment enrollment) {
 
         List<StudentUnitRegistration> registrations =
-                registrationRepository.findByEnrollmentIdAndSemesterUnitSemesterId(
+                registrationRepository.findByEnrollmentIdAndCourseUnitPlacementCourseAcademicPeriodId(
                         enrollment.getId(),
-                        enrollment.getCurrentSemester().getId()
+                        enrollment.getCurrentCourseAcademicPeriod().getId()
                 );
 
         if (registrations.isEmpty()) {
             return false;
         }
 
-        long mandatoryUnits =
+        long coreUnits =
                 registrations.stream()
-                        .filter(r -> r.getSemesterUnit().isMandatory())
+                        .filter(r -> r.getCourseUnitPlacement().getUnitType() == UnitType.CORE)
                         .count();
 
         long passed =
                 registrations.stream()
-                        .filter(r -> r.getSemesterUnit().isMandatory())
+                        .filter(r -> r.getCourseUnitPlacement().getUnitType() == UnitType.CORE)
                         .filter(r -> {
 
                             StudentResult result =
@@ -201,6 +190,6 @@ public class StudentPromotionService {
                         })
                         .count();
 
-        return mandatoryUnits == passed;
+        return coreUnits == passed;
     }
 }

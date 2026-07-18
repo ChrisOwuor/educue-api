@@ -1,11 +1,9 @@
 package com.owuor.educue.results.controller;
 
 
-import com.owuor.educue.results.dto.LecturerResultSheetRowResponse;
 import com.owuor.educue.results.dto.MarksEntryRowResponse;
 import com.owuor.educue.results.dto.SaveMarksRequest;
 import com.owuor.educue.results.service.LecturerMarksService;
-import com.owuor.educue.results.service.StudentResultService;
 import com.owuor.educue.users.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,11 +21,11 @@ public class LecturerSubmitResultsController {
     private final LecturerMarksService lecturerMarksService;
 
     @PreAuthorize("hasAuthority('view_student')")
-    @GetMapping("/{semesterUnitId}")
+    @GetMapping("/{courseUnitPlacementId}")
     public List<MarksEntryRowResponse> getResultSheet(
-            @PathVariable Long semesterUnitId
+            @PathVariable Long courseUnitPlacementId
     ) {
-        return lecturerMarksService.getResultSheet(semesterUnitId);
+        return lecturerMarksService.getResultSheet(courseUnitPlacementId);
     }
 
     @PostMapping

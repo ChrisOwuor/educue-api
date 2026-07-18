@@ -7,19 +7,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
 public class CreateFeeStructureRequest {
 
     @NotNull
-    private Long intakeId;
+    private Long intakeCourseId;
 
     @NotNull
-    private Long courseId;
-
-    @NotNull
-    private Long semesterId;
+    private UUID courseAcademicPeriodUuid;
 
     @Valid
     @NotEmpty

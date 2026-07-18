@@ -3,8 +3,8 @@ package com.owuor.educue.academics.dto;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Builder
@@ -15,24 +15,23 @@ public class TrainerAssignmentResponse {
     private Long trainerId;
     private String trainerName;
 
-    private Long semesterUnitId;
+    private Long courseUnitPlacementId;
+    private UUID courseUnitPlacementUuid;
 
     private Long unitId;
     private String unitCode;
     private String unitName;
 
-    private Long semesterId;
-    private String semesterName;
-
-    private Long curriculumId;
-    private String curriculumName;
+    private Long courseAcademicPeriodId;
+    private String academicPeriodName;
 
     private Long courseId;
     private String courseName;
 
-    private LocalDate effectiveFrom;
-
-    private LocalDate effectiveTo;
+    private UUID effectiveFromAcademicYearUuid;
+    private String effectiveFrom;
+    private UUID effectiveToAcademicYearUuid;
+    private String effectiveTo;
 
     private boolean active;
 

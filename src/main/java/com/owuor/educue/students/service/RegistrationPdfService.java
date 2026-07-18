@@ -5,13 +5,16 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.draw.LineSeparator;
-import com.owuor.educue.academics.entity.Semester;
-import com.owuor.educue.academics.entity.SemesterUnit;
 import com.owuor.educue.academics.service.PdfFooterPageEvent;
 import com.owuor.educue.students.dto.StudentUnitRegistrationFilterRequest;
 import com.owuor.educue.students.entity.*;
 import com.owuor.educue.students.repository.StudentUnitRegistrationRepository;
 import com.owuor.educue.students.repository.StudentUnitRegistrationSpecification;
+import com.owuor.educue.academics.repository.CourseUnitPlacementRepository;
+import com.owuor.educue.institution.repository.InstitutionProfileRepository;
+import com.owuor.educue.academics.enums.RegistrationStatus;
+import jakarta.persistence.EntityNotFoundException;
+import com.owuor.educue.common.report.ProfessionalPdfService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -30,10 +33,175 @@ import static java.awt.Color.white;
 public class RegistrationPdfService {
 
     private final StudentUnitRegistrationRepository registrationRepository;
+    private final CourseUnitPlacementRepository placementRepository;
+    private final InstitutionProfileRepository institutionProfileRepository;
+    private final ProfessionalPdfService professionalPdfService;
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
 
+    public byte[] generateProfessionalExamListPdf(Long placementId, String lecturerName) {
+        var placement = placementRepository.findById(placementId)
+                .orElseThrow(() -> new EntityNotFoundException("Course unit placement not found."));
+        var registrations = registrationRepository.findByCourseUnitPlacementIdAndStatusOrderByEnrollmentStudentAdmissionNumberAsc(
+                placementId, RegistrationStatus.ACTIVE);
+        var details = rosterDetails(placement, lecturerName, registrations.size());
+        var rows = new java.util.ArrayList<java.util.List<String>>();
+        int number = 1;
+        for (var registration : registrations) {
+            var student = registration.getEnrollment().getStudent();
+            rows.add(java.util.List.of(String.valueOf(number++), student.getAdmissionNumber(), student.getFullName(), "", ""));
+        }
+        return professionalPdfService.tableReport("Examination Mark Entry List", details,
+                java.util.List.of("No.", "Registration No.", "Student Name", "CAT", "Exam"), rows);
+    }
+
+    /** Exam-room checklist signed when each candidate hands in the answer script. */
+    public byte[] generateExamSubmissionChecklistPdf(Long placementId, String lecturerName) {
+        var placement = placementRepository.findById(placementId)
+                .orElseThrow(() -> new EntityNotFoundException("Course unit placement not found."));
+        var registrations = registrationRepository.findByCourseUnitPlacementIdAndStatusOrderByEnrollmentStudentAdmissionNumberAsc(
+                placementId, RegistrationStatus.ACTIVE);
+        var details = rosterDetails(placement, lecturerName, registrations.size());
+        var rows = new java.util.ArrayList<java.util.List<String>>();
+        int number = 1;
+        for (var registration : registrations) {
+            var student = registration.getEnrollment().getStudent();
+            rows.add(java.util.List.of(String.valueOf(number++), student.getAdmissionNumber(), student.getFullName(), "", "", ""));
+        }
+        return professionalPdfService.tableReport("Examination Script Submission Checklist", details,
+                java.util.List.of("No.", "Registration No.", "Student Name", "Student Signature", "Time Submitted", "Invigilator Remarks"), rows);
+    }
+
+    private java.util.LinkedHashMap<String, String> rosterDetails(
+            com.owuor.educue.academics.entity.CourseUnitPlacement placement, String lecturerName, int count) {
+        var details = new java.util.LinkedHashMap<String, String>();
+        details.put("Course", placement.getCourseAcademicPeriod().getCourse().getName());
+        details.put("Academic period", placement.getCourseAcademicPeriod().getAcademicPeriod().getName());
+        details.put("Unit", placement.getUnit().getCode() + " - " + placement.getUnit().getName());
+        details.put("Lecturer", lecturerName);
+        details.put("Registered students", String.valueOf(count));
+        return details;
+    }
+
+    /** Printable blank mark sheet for physical examination-room entry. */
+    public byte[] generateExamListPdf(Long placementId, String lecturerName) {
+        var placement = placementRepository.findById(placementId)
+                .orElseThrow(() -> new EntityNotFoundException("Course unit placement not found."));
+        var registrations = registrationRepository
+                .findByCourseUnitPlacementIdAndStatusOrderByEnrollmentStudentAdmissionNumberAsc(
+                        placementId, RegistrationStatus.ACTIVE);
+        var institution = institutionProfileRepository.findById(1L).orElse(null);
+
+        try {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            Document document = new Document(PageSize.A4.rotate(), 30, 30, 36, 48);
+            PdfWriter writer = PdfWriter.getInstance(document, out);
+            writer.setPageEvent(new PdfFooterPageEvent());
+            document.open();
+
+            Font institutionFont = new Font(Font.HELVETICA, 16, Font.BOLD, Color.BLACK);
+            Font titleFont = new Font(Font.HELVETICA, 11, Font.BOLD, new Color(0, 70, 140));
+            Font detailFont = new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY);
+            Paragraph institutionName = new Paragraph(
+                    institution == null ? "EduCue Training Institution" : institution.getName(), institutionFont);
+            institutionName.setAlignment(Element.ALIGN_CENTER);
+            document.add(institutionName);
+            Paragraph title = new Paragraph("EXAMINATION MARK ENTRY LIST", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            title.setSpacingBefore(5);
+            title.setSpacingAfter(10);
+            document.add(title);
+
+            var coursePeriod = placement.getCourseAcademicPeriod();
+            PdfPTable details = new PdfPTable(4);
+            details.setWidthPercentage(100);
+            details.setWidths(new float[]{1.2f, 3.8f, 1.2f, 3.8f});
+            examInfo(details, "Course", coursePeriod.getCourse().getName(), detailFont);
+            examInfo(details, "Academic period", coursePeriod.getAcademicPeriod().getName(), detailFont);
+            examInfo(details, "Unit", placement.getUnit().getCode() + " - " + placement.getUnit().getName(), detailFont);
+            examInfo(details, "Lecturer", lecturerName, detailFont);
+            examInfo(details, "Generated", java.time.LocalDateTime.now().format(DATE_FORMAT), detailFont);
+            examInfo(details, "Registered", String.valueOf(registrations.size()), detailFont);
+            details.setSpacingAfter(12);
+            document.add(details);
+
+            PdfPTable table = new PdfPTable(6);
+            table.setWidthPercentage(100);
+            table.setWidths(new float[]{0.7f, 2.2f, 4.2f, 1.5f, 1.5f, 1.5f});
+            table.setHeaderRows(1);
+            String[] headers = {"No.", "Registration No.", "Student Name", "Coursework", "Exam", "Total"};
+            for (String header : headers) examHeader(table, header);
+            int row = 1;
+            for (StudentUnitRegistration registration : registrations) {
+                var student = registration.getEnrollment().getStudent();
+                examCell(table, String.valueOf(row++), Element.ALIGN_CENTER);
+                examCell(table, student.getAdmissionNumber(), Element.ALIGN_LEFT);
+                examCell(table, student.getFullName(), Element.ALIGN_LEFT);
+                examCell(table, "", Element.ALIGN_CENTER);
+                examCell(table, "", Element.ALIGN_CENTER);
+                examCell(table, "", Element.ALIGN_CENTER);
+            }
+            document.add(table);
+
+            Paragraph signoff = new Paragraph(
+                    "Lecturer signature: ______________________________    Date: ____________________",
+                    new Font(Font.HELVETICA, 9, Font.NORMAL, Color.DARK_GRAY));
+            signoff.setSpacingBefore(18);
+            document.add(signoff);
+            document.close();
+            return out.toByteArray();
+        } catch (Exception exception) {
+            throw new RuntimeException("Error generating examination list PDF", exception);
+        }
+    }
+
+    private void examInfo(PdfPTable table, String label, String value, Font font) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, new Font(Font.HELVETICA, 9, Font.BOLD, Color.DARK_GRAY)));
+        labelCell.setBackgroundColor(new Color(245, 247, 250));
+        labelCell.setPadding(6);
+        labelCell.setBorderColor(new Color(220, 220, 220));
+        table.addCell(labelCell);
+        PdfPCell valueCell = new PdfPCell(new Phrase(value == null ? "" : value, font));
+        valueCell.setPadding(6);
+        valueCell.setBorderColor(new Color(220, 220, 220));
+        table.addCell(valueCell);
+    }
+
+    private void examHeader(PdfPTable table, String value) {
+        PdfPCell cell = new PdfPCell(new Phrase(value, new Font(Font.HELVETICA, 9, Font.BOLD, Color.WHITE)));
+        cell.setBackgroundColor(new Color(0, 70, 140));
+        cell.setPadding(7);
+        cell.setHorizontalAlignment(Element.ALIGN_CENTER);
+        table.addCell(cell);
+    }
+
+    private void examCell(PdfPTable table, String value, int alignment) {
+        PdfPCell cell = new PdfPCell(new Phrase(value, new Font(Font.HELVETICA, 9)));
+        cell.setPadding(8);
+        cell.setHorizontalAlignment(alignment);
+        cell.setBorderColor(new Color(205, 205, 205));
+        table.addCell(cell);
+    }
+
     public byte[] generateRegistrationsPdf(StudentUnitRegistrationFilterRequest filter) {
+        List<StudentUnitRegistration> registrations = registrationRepository.findAll(
+                StudentUnitRegistrationSpecification.withFilters(filter.getSearch(), filter.getCourseId(),
+                        filter.getCourseAcademicPeriodId(), filter.getCourseUnitPlacementId(),
+                        filter.getAttemptType(), filter.getStatus()), Sort.by(Sort.Direction.DESC, "registeredAt"));
+        var details = new java.util.LinkedHashMap<String, String>();
+        details.put("Registrations", String.valueOf(registrations.size()));
+        var rows = registrations.stream().map(registration -> {
+            var enrollment = registration.getEnrollment();
+            var placement = registration.getCourseUnitPlacement();
+            return java.util.List.of(enrollment.getStudent().getAdmissionNumber(), enrollment.getStudent().getFullName(),
+                    enrollment.getIntakeCourse().getCourse().getName(), placement.getCourseAcademicPeriod().getAcademicPeriod().getName(),
+                    placement.getUnit().getCode(), registration.getStatus().name());
+        }).toList();
+        return professionalPdfService.tableReport("Unit Registrations Report", details,
+                java.util.List.of("Admission No.", "Student", "Course", "Academic period", "Unit", "Status"), rows);
+    }
+
+    private byte[] generateRegistrationsPdfLegacy(StudentUnitRegistrationFilterRequest filter) {
         // No Pageable here on purpose - an export should contain every
         // row matching the filter, not just whatever page the user
         // happened to be looking at. Reuses the SAME Specification as
@@ -43,9 +211,8 @@ public class RegistrationPdfService {
                 StudentUnitRegistrationSpecification.withFilters(
                         filter.getSearch(),
                         filter.getCourseId(),
-                        filter.getCurriculumId(),
-                        filter.getSemesterId(),
-                        filter.getSemesterUnitId(),
+                        filter.getCourseAcademicPeriodId(),
+                        filter.getCourseUnitPlacementId(),
                         filter.getAttemptType(),
                         filter.getStatus()
                 ),
@@ -268,9 +435,7 @@ public class RegistrationPdfService {
         Font font = new Font(Font.HELVETICA, 9);
 
         Enrollment enrollment = registration.getEnrollment();
-        SemesterUnit semesterUnit = registration.getSemesterUnit();
-        Semester semester = semesterUnit.getSemester();
-        var curriculum = enrollment.getCourseCurriculum();
+        var placement = registration.getCourseUnitPlacement();
 
         Color rowColor =
                 alternateRow
@@ -291,7 +456,7 @@ public class RegistrationPdfService {
 
         addCell(
                 table,
-                semesterUnit.getUnit().getCode() ,
+                placement.getUnit().getCode() ,
                 font,
                 Element.ALIGN_LEFT,
                 rowColor
@@ -299,7 +464,7 @@ public class RegistrationPdfService {
 
         addCell(
                 table,
-                curriculum.getCourse().getName(),
+                enrollment.getIntakeCourse().getCourse().getName(),
                 font,
                 Element.ALIGN_LEFT,
                 rowColor

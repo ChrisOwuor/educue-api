@@ -11,11 +11,21 @@ import java.util.Optional;
 
 public interface FeeLedgerRepository extends JpaRepository<FeeLedger, Long> {
 
+    @Query(value = "SELECT nextval('finance_document_number_seq')", nativeQuery = true)
+    Long nextDocumentSequence();
+
+    @Query(value = "SELECT nextval('finance_receipt_number_seq')", nativeQuery = true)
+    Long nextReceiptSequence();
+
+    boolean existsByReversalOfId(Long ledgerId);
+
     // Finds the most recent ledger row for a student to get their current running balance.
     Optional<FeeLedger> findTopByStudentIdOrderByIdDesc(Long studentId);
 
     // Finds all ledger rows for a student, ordered chronologically.
     List<FeeLedger> findAllByStudentIdOrderByIdAsc(Long studentId);
+
+    List<FeeLedger> findAllByStudentIdOrderByPostingDateAscCreatedAtAscIdAsc(Long studentId);
 
     // Checks if a student has already been billed for a specific fee structure.
     boolean existsByStudentIdAndFeeStructureId(Long studentId, Long feeStructureId);
@@ -48,21 +58,21 @@ public interface FeeLedgerRepository extends JpaRepository<FeeLedger, Long> {
             SELECT COALESCE(SUM(fl.debit),0)
             FROM FeeLedger fl
             WHERE fl.student.id = :studentId
-            AND fl.semester.id = :semesterId
+            AND fl.courseAcademicPeriod.id = :courseAcademicPeriodId
             """)
-    BigDecimal getSemesterCharges(
+    BigDecimal getAcademicPeriodCharges(
             Long studentId,
-            Long semesterId
+            Long courseAcademicPeriodId
     );
 
     @Query("""
 SELECT COALESCE(SUM(fl.credit),0)
 FROM FeeLedger fl
 WHERE fl.student.id = :studentId
-AND fl.semester.id = :semesterId
+AND fl.courseAcademicPeriod.id = :courseAcademicPeriodId
 """)
-    BigDecimal getSemesterPayments(
+    BigDecimal getAcademicPeriodPayments(
             Long studentId,
-            Long semesterId
+            Long courseAcademicPeriodId
     );
 }

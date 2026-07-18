@@ -13,17 +13,17 @@ public class StudentUnitRegistrationResponse {
 
     Long studentId;
 
+    Long courseUnitPlacementId;
+
     String studentName;
 
     String admissionNumber;
 
     String course;
 
-    String currentSemester;
+    String currentAcademicPeriod;
 
-    String curriculum;
-
-    String semester;
+    String academicPeriod;
 
     String unitCode;
 

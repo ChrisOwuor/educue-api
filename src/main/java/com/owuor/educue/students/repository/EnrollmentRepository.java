@@ -16,6 +16,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface EnrollmentRepository
         extends JpaRepository<Enrollment, Long>,
@@ -24,9 +25,9 @@ public interface EnrollmentRepository
     @Override
     @EntityGraph(attributePaths = {
             "student",
-            "course",
-            "currentSemester",
-            "courseCurriculum"
+            "intakeCourse.course",
+            "intakeCourse.intake",
+            "currentCourseAcademicPeriod.academicPeriod"
     })
     Page<Enrollment> findAll(
             Specification<Enrollment> spec,
@@ -36,28 +37,27 @@ public interface EnrollmentRepository
     @EntityGraph(attributePaths = {
             "student",
             "student.user",
-            "course",
-            "courseCurriculum",
-            "currentSemester"
+            "intakeCourse.course",
+            "intakeCourse.intake",
+            "currentCourseAcademicPeriod.academicPeriod"
     })
     Optional<Enrollment> findByStudentUserId(Long userId);
 
+    @EntityGraph(attributePaths = {"student", "intakeCourse.course", "currentCourseAcademicPeriod.academicPeriod"})
+    Optional<Enrollment> findByStudentId(Long studentId);
 
-    @EntityGraph(attributePaths = {
-            "student",
-            "currentSemester",
-            "currentSemester.nextSemester"
-    })
-    Page<Enrollment> findByStatusAndCurrentSemesterId(
+
+    @EntityGraph(attributePaths = {"student", "currentCourseAcademicPeriod", "currentCourseAcademicPeriod.nextPeriod"})
+    Page<Enrollment> findByStatusAndCurrentCourseAcademicPeriodId(
             EnrollmentStatus status,
-            Long semesterId,
+            Long courseAcademicPeriodId,
             Pageable pageable
     );
 
     @EntityGraph(attributePaths = {
             "student",
-            "currentSemester",
-            "currentSemester.nextSemester"
+            "currentCourseAcademicPeriod",
+            "currentCourseAcademicPeriod.nextPeriod"
     })
     Page<Enrollment> findByStatus(
             EnrollmentStatus status,
@@ -66,8 +66,9 @@ public interface EnrollmentRepository
 
     @EntityGraph(attributePaths = {
             "student",
-            "currentSemester",
-            "courseCurriculum"
+            "currentCourseAcademicPeriod.academicPeriod",
+            "currentCourseAcademicPeriod.nextPeriod",
+            "intakeCourse.course"
     })
     @Query("""
             SELECT e
@@ -87,13 +88,30 @@ public interface EnrollmentRepository
     @Query("""
                 SELECT fs
                 FROM Enrollment e
-                JOIN e.student s
-                JOIN s.application a
                 JOIN FeeStructure fs
-                    ON fs.course = e.course
-                   AND fs.intake = a.intake
-                   AND fs.semester = e.currentSemester
+                    ON fs.intakeCourse = e.intakeCourse
+                   AND fs.courseAcademicPeriod = e.currentCourseAcademicPeriod
                 WHERE e.id = :enrollmentId
             """)
     Optional<FeeStructure> findCurrentFeeStructure(Long enrollmentId);
+
+    /** Active students in one course at one exact progression period. */
+    @EntityGraph(attributePaths = {
+            "student",
+            "intakeCourse.course",
+            "intakeCourse.intake",
+            "currentCourseAcademicPeriod.academicPeriod"
+    })
+    @Query("""
+            SELECT e
+            FROM Enrollment e
+            WHERE e.status = com.owuor.educue.students.enums.EnrollmentStatus.ACTIVE
+              AND e.intakeCourse.course.uuid = :courseUuid
+              AND e.currentCourseAcademicPeriod.uuid = :courseAcademicPeriodUuid
+            ORDER BY e.student.admissionNumber, e.student.fullName
+            """)
+    List<Enrollment> findActiveClassList(
+            @Param("courseUuid") UUID courseUuid,
+            @Param("courseAcademicPeriodUuid") UUID courseAcademicPeriodUuid
+    );
 }

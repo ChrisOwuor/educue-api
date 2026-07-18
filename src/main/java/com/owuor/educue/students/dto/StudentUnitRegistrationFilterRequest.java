@@ -13,11 +13,9 @@ public class StudentUnitRegistrationFilterRequest {
 
     private Long courseId;
 
-    private Long curriculumId;
+    private Long courseAcademicPeriodId;
 
-    private Long semesterId;
-
-    private Long semesterUnitId;
+    private Long courseUnitPlacementId;
 
     private AttemptType attemptType;
 

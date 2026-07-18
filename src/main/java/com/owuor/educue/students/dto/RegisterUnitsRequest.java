@@ -10,6 +10,6 @@ import java.util.List;
 @AllArgsConstructor
 public class RegisterUnitsRequest {
 
-    private List<Long> semesterUnitIds;
+    private List<Long> courseUnitPlacementIds;
 
 }

@@ -14,15 +14,15 @@ import java.util.List;
 @AllArgsConstructor
 public class RegisteredStudentsResponse {
 
-    private Long semesterUnitId;
+    private Long courseUnitPlacementId;
 
     private String unitCode;
 
     private String unitName;
 
-    private Long semesterId;
+    private Long courseAcademicPeriodId;
 
-    private String semesterName;
+    private String academicPeriodName;
 
     private Integer totalRegistered;
 

@@ -41,13 +41,8 @@ public class EnrollmentService {
                                 )
                         )
                         .and(
-                                EnrollmentSpecification.curriculum(
-                                        request.getCurriculumId()
-                                )
-                        )
-                        .and(
-                                EnrollmentSpecification.semester(
-                                        request.getSemesterId()
+                                EnrollmentSpecification.courseAcademicPeriod(
+                                        request.getCourseAcademicPeriodId()
                                 )
                         )
                         .and(
@@ -90,7 +85,7 @@ public class EnrollmentService {
                         enrollment.getStudent()
                                 .getAdmissionNumber()
                 )
-                .appliedSemesterId(enrollment.getCurrentSemester().getId())
+                .courseAcademicPeriodId(enrollment.getCurrentCourseAcademicPeriod().getId())
                 .studentName(
                         enrollment.getStudent()
                                 .getFullName()
@@ -100,16 +95,12 @@ public class EnrollmentService {
                                 .getEmail()
                 )
                 .courseName(
-                        enrollment.getCourse()
+                        enrollment.getIntakeCourse().getCourse()
                                 .getName()
                 )
-                .curriculumName(
-                        enrollment.getCourseCurriculum()
-                                .getName()
-                )
-                .semesterName(
-                        enrollment.getCurrentSemester()
-                                .getName()
+                .academicPeriodName(
+                        enrollment.getCurrentCourseAcademicPeriod()
+                                .getAcademicPeriod().getName()
                 )
                 .status(
                         enrollment.getStatus().name()

@@ -1,5 +1,7 @@
 package com.owuor.educue.academics.dto;
 
+import com.owuor.educue.academics.enums.QualificationType;
+import com.owuor.educue.academics.enums.StudyMode;
 import lombok.Data;
 
 import java.util.UUID;
@@ -12,7 +14,10 @@ public class CourseDTO {
     private String name;
     private String departmentName;
     private Integer durationValue;
-    private String durationUnit;
-    private Integer totalSemesters;
     private boolean active;
+    private QualificationType qualificationType;
+    private StudyMode studyMode;
+    private Integer totalCredits;
+    private String awardTitle;
+    private String durationUnit;
 }

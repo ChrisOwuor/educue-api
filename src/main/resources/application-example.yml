@@ -43,6 +43,18 @@ app:
   storage:
     local-root: ./storage
 
+  mpesa:
+    base-url: https://sandbox.safaricom.co.ke
+    consumer-key: replace_with_daraja_consumer_key
+    consumer-secret: replace_with_daraja_consumer_secret
+    short-code: 600000
+    stk-passkey: replace_with_lipa_na_mpesa_passkey
+    stk-callback-token: replace_with_a_long_random_stk_callback_token
+    callback-token: replace_with_a_long_random_callback_token
+    phone-hash-pepper: replace_with_a_separate_long_random_secret
+    worker-delay-ms: 500
+    recovery-delay-ms: 60000
+
 logging:
   level:
     web: debug

@@ -1,16 +1,14 @@
 package com.owuor.educue.academics.controller;
 
 import com.owuor.educue.academics.dto.CreateTrainerAssignmentRequest;
-import com.owuor.educue.academics.dto.TrainerAssignmentFilterRequest;
 import com.owuor.educue.academics.dto.TrainerAssignmentResponse;
+import com.owuor.educue.academics.dto.CourseUnitAllocationResponse;
 import com.owuor.educue.academics.service.TrainerAssignmentService;
 import com.owuor.educue.users.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +21,7 @@ public class TrainerAssignmentController {
     private final TrainerAssignmentService trainerAssignmentService;
 
     @PostMapping
+    @PreAuthorize("hasAuthority('assign_trainer')")
     public TrainerAssignmentResponse create(
             @Valid @RequestBody CreateTrainerAssignmentRequest request,
             @AuthenticationPrincipal User authenticatedUser
@@ -30,12 +29,17 @@ public class TrainerAssignmentController {
         return trainerAssignmentService.create(request, authenticatedUser);
     }
 
-    @GetMapping
-    public Page<TrainerAssignmentResponse> get(
-            TrainerAssignmentFilterRequest filter,
-            Pageable pageable
+    @GetMapping("/allocation-view")
+    @PreAuthorize("hasAuthority('assign_trainer')")
+    public List<CourseUnitAllocationResponse> allocationView(
+            @RequestParam(required = false) String search
     ) {
-        return trainerAssignmentService.get(filter, pageable);
+        return trainerAssignmentService.getAllocationView(search);
+    }
+
+    @GetMapping("/me")
+    public List<TrainerAssignmentResponse> getMine(@AuthenticationPrincipal User authenticatedUser) {
+        return trainerAssignmentService.getMine(authenticatedUser.getId());
     }
 
 

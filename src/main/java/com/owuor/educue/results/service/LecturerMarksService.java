@@ -24,12 +24,12 @@ public class LecturerMarksService {
 
     private final StudentResultRepository resultRepository;
 
-    public List<MarksEntryRowResponse> getResultSheet(Long semesterUnitId) {
+    public List<MarksEntryRowResponse> getResultSheet(Long courseUnitPlacementId) {
 
         List<StudentUnitRegistration> registrations =
                 registrationRepository
-                        .findBySemesterUnitIdAndStatusOrderByEnrollmentStudentFullNameAsc(
-                                semesterUnitId,
+                        .findByCourseUnitPlacementIdAndStatusOrderByEnrollmentStudentFullNameAsc(
+                                courseUnitPlacementId,
                                 RegistrationStatus.ACTIVE
                         );
 
@@ -60,18 +60,18 @@ public class LecturerMarksService {
                                             .getFullName()
                             )
 
-                            .semesterUnitId(
-                                    registration.getSemesterUnit().getId()
+                            .courseUnitPlacementId(
+                                    registration.getCourseUnitPlacement().getId()
                             )
 
                             .unitCode(
-                                    registration.getSemesterUnit()
+                                    registration.getCourseUnitPlacement()
                                             .getUnit()
                                             .getCode()
                             )
 
                             .unitName(
-                                    registration.getSemesterUnit()
+                                    registration.getCourseUnitPlacement()
                                             .getUnit()
                                             .getName()
                             )
@@ -157,9 +157,9 @@ public class LecturerMarksService {
                 .studentId(registration.getEnrollment().getStudent().getId())
                 .admissionNumber(registration.getEnrollment().getStudent().getAdmissionNumber())
                 .studentName(registration.getEnrollment().getStudent().getFullName())
-                .semesterUnitId(registration.getSemesterUnit().getId())
-                .unitCode(registration.getSemesterUnit().getUnit().getCode())
-                .unitName(registration.getSemesterUnit().getUnit().getName())
+                .courseUnitPlacementId(registration.getCourseUnitPlacement().getId())
+                .unitCode(registration.getCourseUnitPlacement().getUnit().getCode())
+                .unitName(registration.getCourseUnitPlacement().getUnit().getName())
                 .attemptType(registration.getAttemptType().name())
                 .resultId(result.getId())
                 .caMarks(result.getCaMarks())

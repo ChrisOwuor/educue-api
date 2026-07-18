@@ -31,14 +31,14 @@ public class EnrollmentSpecification {
                     ),
                     cb.like(
                             cb.lower(
-                                    root.get("course")
+                                    root.get("intakeCourse").get("course")
                                             .get("name")
                             ),
                             like
                     ),
                     cb.like(
                             cb.lower(
-                                    root.get("course")
+                                    root.get("intakeCourse").get("course")
                                             .get("code")
                             ),
                             like
@@ -66,38 +66,25 @@ public class EnrollmentSpecification {
             }
 
             return cb.equal(
-                    root.get("course").get("id"),
+                    root.get("intakeCourse").get("course").get("id"),
                     courseId
             );
         };
     }
 
-    public static Specification<Enrollment> semester(Long semesterId) {
+    public static Specification<Enrollment> courseAcademicPeriod(Long courseAcademicPeriodId) {
 
         return (root, query, cb) -> {
 
-            if (semesterId == null) {
+            if (courseAcademicPeriodId == null) {
                 return null;
             }
 
             return cb.equal(
-                    root.get("currentSemester").get("id"),
-                    semesterId
+                    root.get("currentCourseAcademicPeriod").get("id"),
+                    courseAcademicPeriodId
             );
         };
     }
 
-    public static Specification<Enrollment> curriculum(Long curriculumId) {
-        return (root, query, cb) -> {
-
-            if (curriculumId == null) {
-                return null;
-            }
-
-            return cb.equal(
-                    root.get("courseCurriculum").get("id"),
-                    curriculumId
-            );
-        };
-    }
 }

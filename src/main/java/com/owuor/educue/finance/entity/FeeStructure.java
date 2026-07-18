@@ -1,8 +1,7 @@
 package com.owuor.educue.finance.entity;
 
-import com.owuor.educue.academics.entity.Course;
-import com.owuor.educue.academics.entity.Semester;
-import com.owuor.educue.admissions.entity.Intake;
+import com.owuor.educue.academics.entity.CourseAcademicPeriod;
+import com.owuor.educue.admissions.entity.IntakeCourse;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,9 +19,8 @@ import java.util.List;
                 @UniqueConstraint(
                         name = "uk_fee_structure",
                         columnNames = {
-                                "intake_id",
-                                "course_id",
-                                "semester_id"
+                                "intake_course_id",
+                                "course_academic_period_id"
                         }
                 )
         }
@@ -37,16 +35,12 @@ public class FeeStructure {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "intake_id", nullable = false)
-    private Intake intake;
+    @JoinColumn(name = "intake_course_id", nullable = false)
+    private IntakeCourse intakeCourse;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "semester_id", nullable = false)
-    private Semester semester;
+    @JoinColumn(name = "course_academic_period_id", nullable = false)
+    private CourseAcademicPeriod courseAcademicPeriod;
 
     @Column(nullable = false)
     private boolean active = true;

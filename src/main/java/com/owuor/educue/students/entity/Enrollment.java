@@ -1,8 +1,7 @@
 package com.owuor.educue.students.entity;
 
-import com.owuor.educue.academics.entity.Course;
-import com.owuor.educue.academics.entity.CourseCurriculum;
-import com.owuor.educue.academics.entity.Semester;
+import com.owuor.educue.academics.entity.CourseAcademicPeriod;
+import com.owuor.educue.admissions.entity.IntakeCourse;
 import com.owuor.educue.students.enums.EnrollmentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -27,25 +26,21 @@ public class Enrollment {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    // Locks the student to one specific curriculum version. A new cohort
-    // admitted after this curriculum is retired/replaced gets enrolled
-    // against a DIFFERENT CourseCurriculum row for the same Course -
-    // this is what lets curricula change without disturbing existing students.
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_curriculum_id", nullable = false)
-    private CourseCurriculum courseCurriculum;
+    /**
+     * The concrete course offering through which the student was admitted.
+     * This is the authoritative source for both the intake and course.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "intake_course_id", nullable = false)
+    private IntakeCourse intakeCourse;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
-
-    // Tracks exactly where the student is academically. Promotion logic
-    // must only ever move this to the NEXT Semester within the SAME
-    // course_curriculum_id - never an unscoped "next semester_number"
-    // query, since many curricula share overlapping semester numbers.
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "current_semester_id", nullable = false)
-    private Semester currentSemester;
+    /**
+     * The student's current position in the course progression chain.
+     * Supports semesters, terms, modules, trimesters and blocks uniformly.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "current_course_academic_period_id", nullable = false)
+    private CourseAcademicPeriod currentCourseAcademicPeriod;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

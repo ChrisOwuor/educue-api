@@ -18,19 +18,17 @@ public interface StudentResultRepository
 
     // Covers every relationship the HOD view's mapper touches - without
     // this, each result row would trigger a fresh round-trip to fetch
-    // its registration, enrollment, student, unit, semester, curriculum,
+    // its registration, enrollment, student, placement, academic period,
     // course, recordedBy, and approvedBy individually (classic N+1).
     @Override
     @EntityGraph(attributePaths = {
             "studentUnitRegistration",
             "studentUnitRegistration.enrollment",
             "studentUnitRegistration.enrollment.student",
-            "studentUnitRegistration.enrollment.currentSemester",
-            "studentUnitRegistration.enrollment.courseCurriculum",
-            "studentUnitRegistration.enrollment.courseCurriculum.course",
-            "studentUnitRegistration.semesterUnit",
-            "studentUnitRegistration.semesterUnit.unit",
-            "studentUnitRegistration.semesterUnit.semester",
+            "studentUnitRegistration.enrollment.currentCourseAcademicPeriod.academicPeriod",
+            "studentUnitRegistration.enrollment.intakeCourse.course",
+            "studentUnitRegistration.courseUnitPlacement",
+            "studentUnitRegistration.courseUnitPlacement.unit",
             "recordedBy",
             "approvedBy"
     })
@@ -45,20 +43,20 @@ public interface StudentResultRepository
     );
 
     List<StudentResult>
-    findByStudentUnitRegistrationSemesterUnitId(
-            Long semesterUnitId
+    findByStudentUnitRegistrationCourseUnitPlacementId(
+            Long courseUnitPlacementId
     );
 
 
     @EntityGraph(attributePaths = {
             "studentUnitRegistration",
-            "studentUnitRegistration.semesterUnit",
-            "studentUnitRegistration.semesterUnit.unit",
-            "studentUnitRegistration.semesterUnit.semester",
+            "studentUnitRegistration.courseUnitPlacement",
+            "studentUnitRegistration.courseUnitPlacement.unit",
+            "studentUnitRegistration.courseUnitPlacement.courseAcademicPeriod.academicPeriod",
             "studentUnitRegistration.enrollment",
             "studentUnitRegistration.enrollment.student"
     })
-    List<StudentResult> findByStudentUnitRegistrationEnrollmentStudentUserIdOrderByStudentUnitRegistrationSemesterUnitSemester(
+    List<StudentResult> findByStudentUnitRegistrationEnrollmentStudentUserIdOrderByStudentUnitRegistrationCourseUnitPlacementCourseAcademicPeriodPosition(
             Long userId
     );
 

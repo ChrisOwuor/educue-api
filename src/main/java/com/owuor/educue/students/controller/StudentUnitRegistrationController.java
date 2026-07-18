@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import com.owuor.educue.users.entity.User;
 
 import java.util.List;
 
@@ -27,12 +29,57 @@ public class StudentUnitRegistrationController {
     private final StudentUnitRegistrationService registrationService;
     private final RegistrationPdfService registrationPdfService;
 
-    @PreAuthorize("hasAnyRole('HOD','ADMIN')")
-    @GetMapping("/semester-unit/{semesterUnitId}")
+    @PreAuthorize("hasAnyRole('TRAINER','HOD','ADMIN')")
+    @GetMapping("/course-unit-placement/{courseUnitPlacementId}")
     public RegisteredStudentsResponse getRegisteredStudents(
-            @PathVariable Long semesterUnitId
+            @PathVariable Long courseUnitPlacementId,
+            @AuthenticationPrincipal User requester
     ) {
-        return registrationService.getRegisteredStudents(semesterUnitId);
+        return registrationService.getRegisteredStudents(courseUnitPlacementId, requester);
+    }
+
+    @PreAuthorize("hasAnyRole('TRAINER','HOD','ADMIN')")
+    @GetMapping("/course-unit-placement/{courseUnitPlacementId}/exam-list")
+    public ResponseEntity<byte[]> exportExamList(
+            @PathVariable Long courseUnitPlacementId,
+            @AuthenticationPrincipal User requester
+    ) {
+        registrationService.assertCanViewPlacement(courseUnitPlacementId, requester);
+        byte[] pdf = registrationPdfService.generateProfessionalExamListPdf(courseUnitPlacementId, requester.getFullName());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=exam-list.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    @PreAuthorize("hasAnyRole('TRAINER','HOD','ADMIN')")
+    @GetMapping("/course-unit-placement/{courseUnitPlacementId}/exam-submission-checklist")
+    public ResponseEntity<byte[]> exportExamSubmissionChecklist(
+            @PathVariable Long courseUnitPlacementId,
+            @AuthenticationPrincipal User requester
+    ) {
+        registrationService.assertCanViewPlacement(courseUnitPlacementId, requester);
+        byte[] pdf = registrationPdfService.generateExamSubmissionChecklistPdf(courseUnitPlacementId, requester.getFullName());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=exam-submission-checklist.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    @PreAuthorize("hasAnyRole('TRAINER','HOD','ADMIN')")
+    @GetMapping("/course-unit-placement/{courseUnitPlacementId}/students-list")
+    public ResponseEntity<byte[]> exportStudentsList(
+            @PathVariable Long courseUnitPlacementId,
+            @AuthenticationPrincipal User requester
+    ) {
+        registrationService.assertCanViewPlacement(courseUnitPlacementId, requester);
+        StudentUnitRegistrationFilterRequest filter = new StudentUnitRegistrationFilterRequest();
+        filter.setCourseUnitPlacementId(courseUnitPlacementId);
+        byte[] pdf = registrationPdfService.generateRegistrationsPdf(filter);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=registered-students.pdf")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
     }
 
     @PreAuthorize("hasAnyRole('HOD','ADMIN')")

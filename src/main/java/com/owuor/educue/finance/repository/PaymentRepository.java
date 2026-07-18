@@ -14,11 +14,17 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     boolean existsByGatewayReference(String gatewayReference);
 
     Optional<Payment> findByReceiptNumber(String receiptNumber);
+    Optional<Payment> findByGatewayReference(String gatewayReference);
 
     @Query("""
             SELECT p
             FROM Payment p
-            ORDER BY p.paidAt DESC
+            WHERE (:studentId IS NULL OR p.student.id = :studentId)
+              AND (:search IS NULL OR :search = ''
+                   OR LOWER(p.receiptNumber) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(p.gatewayReference) LIKE LOWER(CONCAT('%', :search, '%'))
+                   OR LOWER(p.student.fullName) LIKE LOWER(CONCAT('%', :search, '%')))
+            ORDER BY p.paidAt DESC, p.createdAt DESC, p.id DESC
             """)
     Page<Payment> searchPayments(
             @Param("studentId") Long studentId,

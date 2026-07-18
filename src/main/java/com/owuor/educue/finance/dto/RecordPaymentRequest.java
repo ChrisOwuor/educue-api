@@ -8,6 +8,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
+import com.owuor.educue.finance.enums.PayerType;
 
 @Getter
 @Setter
@@ -16,11 +18,16 @@ public class RecordPaymentRequest {
     @NotNull(message = "Student ID is required")
     private Long studentId;
 
-    private Long appliedSemesterId;
+    private UUID appliedCourseAcademicPeriodUuid;
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "1.0", message = "Amount must be greater than 0")
     private BigDecimal amount;
+
+    @NotNull(message = "Payer type is required")
+    private PayerType payerType = PayerType.STUDENT;
+
+    private String payerName;
 
     @NotBlank(message = "Gateway reference is required")
     private String gatewayReference;

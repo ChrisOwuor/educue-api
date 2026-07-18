@@ -7,8 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public record CreateApplicationRequest(
-        @NotNull Long intakeId,
-        @NotNull Long courseId,
+        @NotNull Long intakeCourseId,
         @NotBlank String fullName,
         @NotBlank @Email String email,
         @NotBlank String phone,

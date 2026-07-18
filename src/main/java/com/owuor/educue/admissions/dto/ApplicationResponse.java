@@ -9,6 +9,8 @@ import java.util.List;
 
 public record ApplicationResponse(
         Long id,
+        String applicationNumber,
+        Long intakeCourseId,
         String intakeName,
         String courseName,
         String fullName,
@@ -24,8 +26,10 @@ public record ApplicationResponse(
     public static ApplicationResponse from(Application app, List<ApplicationDocumentResponse> documents) {
         return new ApplicationResponse(
                 app.getId(),
-                app.getIntake().getName(),
-                app.getCourse().getName(),
+                app.getApplicationNumber(),
+                app.getIntakeCourse().getId(),
+                app.getIntakeCourse().getIntake().getName(),
+                app.getIntakeCourse().getCourse().getName(),
                 app.getFullName(),
                 app.getEmail(),
                 app.getPhone(),
@@ -34,7 +38,7 @@ public record ApplicationResponse(
                 app.getStatus().name(),
                 app.getReviewNotes(),
                 app.getSubmittedAt(),
-                new ArrayList<>()
+                new ArrayList<>(documents)
         );
     }
 }

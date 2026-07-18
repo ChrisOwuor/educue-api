@@ -55,7 +55,7 @@ public class AuthController {
     private ResponseCookie buildAuthCookie(String token, long maxAgeSeconds) {
         return ResponseCookie.from(JwtAuthFilter.COOKIE_NAME, token)
                 .httpOnly(true)
-                .secure(true)        // requires HTTPS - fine for prod, see note below for local dev
+                .secure(false)        // requires HTTPS - fine for prod, see note below for local dev
                 .sameSite("Lax")
                 .path("/")
                 .maxAge(maxAgeSeconds)

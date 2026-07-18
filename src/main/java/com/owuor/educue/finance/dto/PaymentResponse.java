@@ -16,11 +16,13 @@ public class PaymentResponse {
     private String studentName;
     private String admissionNumber;
     
-    private Long appliedSemesterId;
-    private String appliedSemesterName;
+    private java.util.UUID appliedCourseAcademicPeriodUuid;
+    private String appliedAcademicPeriodName;
     
     private String receiptNumber;
     private BigDecimal amount;
+    private String payerType;
+    private String payerName;
     private String gatewayReference;
     private String paymentMethod;
     private LocalDateTime paidAt;

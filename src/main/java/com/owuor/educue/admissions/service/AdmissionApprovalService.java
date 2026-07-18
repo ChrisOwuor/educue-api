@@ -1,13 +1,9 @@
 package com.owuor.educue.admissions.service;
 
-import com.owuor.educue.academics.entity.CourseCurriculum;
-import com.owuor.educue.academics.entity.Semester;
-import com.owuor.educue.academics.repository.CourseCurriculumRepository;
-import com.owuor.educue.academics.repository.SemesterRepository;
+import com.owuor.educue.academics.repository.CourseAcademicPeriodRepository;
 import com.owuor.educue.admissions.entity.Application;
 import com.owuor.educue.admissions.enums.ApplicationStatus;
 import com.owuor.educue.admissions.repository.ApplicationRepository;
-import com.owuor.educue.finance.dto.ChargeStudentRequest;
 import com.owuor.educue.finance.entity.FeeStructure;
 import com.owuor.educue.finance.repository.FeeStructureRepository;
 import com.owuor.educue.finance.service.FeeLedgerService;
@@ -26,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import org.springframework.context.ApplicationEventPublisher;
 
 @Service
 @RequiredArgsConstructor
@@ -33,8 +30,6 @@ import java.time.LocalDateTime;
 public class AdmissionApprovalService {
 
     private final ApplicationRepository applicationRepository;
-    private final CourseCurriculumRepository curriculumRepository;
-    private final SemesterRepository semesterRepository;
     private final StudentRepository studentRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final UserRepository userRepository;
@@ -43,6 +38,8 @@ public class AdmissionApprovalService {
     private final AdmissionNumberGenerator admissionNumberGenerator;
     private final FeeLedgerService feeLedgerService;
     private final FeeStructureRepository feeStructureRepository;
+    private final CourseAcademicPeriodRepository courseAcademicPeriodRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * Converts an approved application into:
@@ -70,6 +67,8 @@ public class AdmissionApprovalService {
                                 new EntityNotFoundException(
                                         "Application not found"
                                 ));
+        var intake = application.getIntakeCourse().getIntake();
+        var course = application.getIntakeCourse().getCourse();
 
         // ---------------------------------------------------------
         // STEP 2:
@@ -115,39 +114,13 @@ public class AdmissionApprovalService {
             );
         }
 
-        // ---------------------------------------------------------
-        // STEP 5:
-        // Resolve the curriculum that NEW admissions
-        // should use for this course.
-        //
-        // Example:
-        // ICT may have:
-        // - Curriculum 2024
-        // - Curriculum 2026
-        //
-        // Only one should be marked:
-        // defaultForAdmission = true
-        // ---------------------------------------------------------
-        CourseCurriculum curriculum =
-                curriculumRepository
-                        .findByCourseIdAndDefaultForAdmissionTrue(
-                                application.getCourse().getId()
-                        )
-                        .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "No default curriculum configured for course "
-                                                + application.getCourse().getName()
-                                ));
-
-
-        // ---------------------------------------------------------
-        // STEP 6:
-        // Resolve the student's starting semester.
-        //
-        // Usually:
-        // Year 1 Semester 1
-        // ---------------------------------------------------------
-        Semester firstSemester = curriculum.getFirstSemester();
+        // Resolve the first stage from the course-specific progression chain.
+        // This works for semesters, terms, modules and every other period model.
+        var firstCoursePeriod = courseAcademicPeriodRepository
+                .findByCourseIdOrderByPosition(course.getId()).stream()
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException(
+                        "No academic periods configured for course " + course.getName()));
 
         // ---------------------------------------------------------
         // STEP 7:
@@ -172,7 +145,7 @@ public class AdmissionApprovalService {
         // ---------------------------------------------------------
         String admissionNumber =
                 admissionNumberGenerator.generate(
-                        application.getCourse().getCode()
+                        course.getCode()
                 );
 
         // ---------------------------------------------------------
@@ -200,7 +173,7 @@ public class AdmissionApprovalService {
         user.setMustChangePassword(true);
 
         user.setRole(studentRole);
-        user.setDepartment(application.getCourse().getDepartment());
+        user.setDepartment(course.getDepartment());
 
         user = userRepository.save(user);
 
@@ -230,15 +203,14 @@ public class AdmissionApprovalService {
         // This links:
         // Student
         // -> Course
-        // -> Curriculum
-        // -> Current Semester
+        // -> Intake course
+        // -> Initial course academic period
         // ---------------------------------------------------------
         Enrollment enrollment = new Enrollment();
 
         enrollment.setStudent(student);
-        enrollment.setCourse(application.getCourse());
-        enrollment.setCourseCurriculum(curriculum);
-        enrollment.setCurrentSemester(firstSemester);
+        enrollment.setIntakeCourse(application.getIntakeCourse());
+        enrollment.setCurrentCourseAcademicPeriod(firstCoursePeriod);
 
         enrollmentRepository.save(enrollment);
 
@@ -260,21 +232,23 @@ public class AdmissionApprovalService {
         //charge the student
 
         FeeStructure feeStructure = feeStructureRepository
-                .findByIntakeIdAndCourseIdAndSemesterId(
-                        application.getIntake().getId(),
-                        application.getCourse().getId(),
-                        enrollment.getCurrentSemester().getId()
-                )
+                .findByIntakeCourseIdAndCourseAcademicPeriodId(
+                        application.getIntakeCourse().getId(), firstCoursePeriod.getId())
                 .orElseThrow(() -> new RuntimeException("Fee structure not found."));
 
-        ChargeStudentRequest request = new ChargeStudentRequest();
-        request.setStudentId(student.getId());
-        request.setFeeStructureId(feeStructure.getId());
-
-        feeLedgerService.chargeStudent(request);
+        feeLedgerService.billEnrollmentPeriod(student, feeStructure);
 
 
-        return applicationRepository.save(application);
+        Application savedApplication = applicationRepository.save(application);
+
+        // Published inside the transaction but handled only AFTER_COMMIT.
+        // A rollback therefore never generates a letter or sends a welcome email.
+        eventPublisher.publishEvent(new StudentAdmittedEvent(
+                student.getId(), application.getId(), application.getApplicationNumber(),
+                admissionNumber, application.getFullName(), application.getEmail(), course.getName()
+        ));
+
+        return savedApplication;
 
         // ---------------------------------------------------------
         // Transaction commits here.

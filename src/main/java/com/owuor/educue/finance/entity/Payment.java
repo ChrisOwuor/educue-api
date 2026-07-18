@@ -1,7 +1,8 @@
 package com.owuor.educue.finance.entity;
 
-import com.owuor.educue.academics.entity.Semester;
+import com.owuor.educue.academics.entity.CourseAcademicPeriod;
 import com.owuor.educue.finance.enums.PaymentStatus;
+import com.owuor.educue.finance.enums.PayerType;
 import com.owuor.educue.students.entity.Student;
 import com.owuor.educue.users.entity.User;
 import jakarta.persistence.*;
@@ -36,14 +37,21 @@ public class Payment {
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "applied_semester_id")
-    private Semester appliedSemester;
+    @JoinColumn(name = "applied_course_academic_period_id")
+    private CourseAcademicPeriod appliedCourseAcademicPeriod;
 
     @Column(name = "receipt_number", unique = true, length = 50)
     private String receiptNumber;
 
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payer_type", nullable = false, length = 30)
+    private PayerType payerType = PayerType.STUDENT;
+
+    @Column(name = "payer_name", length = 160)
+    private String payerName;
 
     @Column(nullable = false, unique = true, length = 100)
     private String gatewayReference;
@@ -53,6 +61,10 @@ public class Payment {
 
     @Column(nullable = false)
     private LocalDateTime paidAt;
+
+    /** Immutable audit timestamp; paidAt remains the user-supplied business time. */
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "recorded_by")
@@ -64,4 +76,9 @@ public class Payment {
 
     @Column(length = 255)
     private String remarks;
+
+    @PrePersist
+    void onCreate() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
 }

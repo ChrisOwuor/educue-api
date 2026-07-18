@@ -198,6 +198,7 @@ public class UnitService {
 
         return UnitDto.builder()
                 .id(unit.getId())
+                .uuid(unit.getUuid())
                 .code(unit.getCode())
                 .name(unit.getName())
                 .creditHours(unit.getCreditHours())

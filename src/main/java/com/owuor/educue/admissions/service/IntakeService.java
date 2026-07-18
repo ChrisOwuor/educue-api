@@ -9,6 +9,8 @@ import com.owuor.educue.admissions.entity.IntakeCourse;
 import com.owuor.educue.admissions.enums.IntakeStatus;
 import com.owuor.educue.admissions.repository.IntakeCourseRepository;
 import com.owuor.educue.admissions.repository.IntakeRepository;
+import com.owuor.educue.institution.entity.AcademicYear;
+import com.owuor.educue.institution.repository.AcademicYearRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -26,6 +28,7 @@ public class IntakeService {
     private final IntakeRepository intakeRepository;
     private final IntakeCourseRepository intakeCourseRepository;
     private final CourseRepository courseRepository;
+    private final AcademicYearRepository academicYearRepository;
 
     public IntakeResponse create(CreateIntakeRequest request) {
         if (intakeRepository.existsByName(request.name())) {
@@ -36,6 +39,19 @@ public class IntakeService {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Application deadline cannot be after the intake start date"
+            );
+        }
+
+        AcademicYear academicYear = academicYearRepository.findByUuid(request.academicYearUuid())
+                .orElseThrow(() -> new EntityNotFoundException("Academic year not found"));
+        if (!academicYear.isActive() || academicYear.isClosed()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The selected academic year is not open");
+        }
+        if (request.startDate().isBefore(academicYear.getStartDate())
+                || request.startDate().isAfter(academicYear.getEndDate())) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Intake start date must fall within the selected academic year"
             );
         }
 
@@ -59,6 +75,7 @@ public class IntakeService {
         Intake intake = new Intake();
         intake.setUuid(UUID.randomUUID());
         intake.setName(request.name());
+        intake.setAcademicYear(academicYear);
         intake.setStartDate(request.startDate());
         intake.setApplicationDeadline(request.applicationDeadline());
         intake.setStatus(

@@ -2,7 +2,6 @@ package com.owuor.educue.results.service;
 
 import com.owuor.educue.academics.enums.RegistrationStatus;
 import com.owuor.educue.results.dto.BatchApprovalRequest;
-import com.owuor.educue.results.dto.LecturerResultSheetRowResponse;
 import com.owuor.educue.results.dto.StudentResultFilterRequest;
 import com.owuor.educue.results.dto.StudentResultResponse;
 import com.owuor.educue.results.entity.StudentResult;
@@ -33,9 +32,8 @@ public class StudentResultService {
                 StudentResultSpecification.withFilters(
                         filter.getSearch(),
                         filter.getCourseId(),
-                        filter.getCurriculumId(),
-                        filter.getSemesterId(),
-                        filter.getSemesterUnitId(),
+                        filter.getCourseAcademicPeriodId(),
+                        filter.getCourseUnitPlacementId(),
                         filter.getStatus(),
                         filter.getPassed()
                 ),
@@ -46,19 +44,17 @@ public class StudentResultService {
     private StudentResultResponse toResponse(StudentResult result) {
         StudentUnitRegistration registration = result.getStudentUnitRegistration();
         Enrollment enrollment = registration.getEnrollment();
-        var semesterUnit = registration.getSemesterUnit();
-        var curriculum = enrollment.getCourseCurriculum();
+        var placement = registration.getCourseUnitPlacement();
 
         return StudentResultResponse.builder()
                 .resultId(result.getId())
                 .studentId(enrollment.getStudent().getId())
                 .studentName(enrollment.getStudent().getFullName())
                 .admissionNumber(enrollment.getStudent().getAdmissionNumber())
-                .unitCode(semesterUnit.getUnit().getCode())
-                .unitName(semesterUnit.getUnit().getName())
-                .course(curriculum.getCourse().getName())
-                .curriculum(curriculum.getName())
-                .semester(semesterUnit.getSemester().getName())
+                .unitCode(placement.getUnit().getCode())
+                .unitName(placement.getUnit().getName())
+                .course(enrollment.getIntakeCourse().getCourse().getName())
+                .academicPeriod(placement.getCourseAcademicPeriod().getAcademicPeriod().getName())
                 .attemptType(registration.getAttemptType().name())
                 .caMarks(result.getCaMarks())
                 .examMarks(result.getExamMarks())
@@ -79,7 +75,7 @@ public class StudentResultService {
     public List<StudentResultResponse> getMyResults(Long userId) {
 
         return resultRepository
-                .findByStudentUnitRegistrationEnrollmentStudentUserIdOrderByStudentUnitRegistrationSemesterUnitSemester(userId)
+                .findByStudentUnitRegistrationEnrollmentStudentUserIdOrderByStudentUnitRegistrationCourseUnitPlacementCourseAcademicPeriodPosition(userId)
                 .stream()
                 .map(this::toResponse)
                 .toList();

@@ -1,6 +1,6 @@
 package com.owuor.educue.finance.entity;
 
-import com.owuor.educue.academics.entity.Semester;
+import com.owuor.educue.academics.entity.CourseAcademicPeriod;
 import com.owuor.educue.finance.enums.TransactionType;
 import com.owuor.educue.students.entity.Student;
 import com.owuor.educue.users.entity.User;
@@ -11,6 +11,8 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import com.owuor.educue.finance.enums.LedgerStatus;
 
 @Entity
 @Table(
@@ -33,8 +35,8 @@ public class FeeLedger {
     private Student student;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "semester_id", nullable = false)
-    private Semester semester;
+    @JoinColumn(name = "course_academic_period_id")
+    private CourseAcademicPeriod courseAcademicPeriod;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
@@ -54,8 +56,22 @@ public class FeeLedger {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal credit = BigDecimal.ZERO;
 
-    @Column(name = "running_balance", nullable = false, precision = 12, scale = 2)
-    private BigDecimal runningBalance = BigDecimal.ZERO;
+    @Column(name = "posting_date", nullable = false)
+    private LocalDate postingDate;
+
+    @Column(name = "document_number", nullable = false, unique = true, updatable = false, length = 40)
+    private String documentNumber;
+
+    @Column(name = "external_reference", length = 100)
+    private String externalReference;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private LedgerStatus status = LedgerStatus.POSTED;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reversal_of_id", unique = true)
+    private FeeLedger reversalOf;
 
     @Column(nullable = false, length = 255)
     private String description;

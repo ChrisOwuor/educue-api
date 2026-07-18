@@ -1,6 +1,6 @@
 package com.owuor.educue.students.entity;
 
-import com.owuor.educue.academics.entity.SemesterUnit;
+import com.owuor.educue.academics.entity.CourseUnitPlacement;
 import com.owuor.educue.academics.enums.AttemptType;
 import com.owuor.educue.academics.enums.RegistrationStatus;
 import jakarta.persistence.*;
@@ -25,9 +25,10 @@ public class StudentUnitRegistration {
     @JoinColumn(name = "enrollment_id", nullable = false)
     private com.owuor.educue.students.entity.Enrollment enrollment;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "semester_unit_id", nullable = false)
-    private SemesterUnit semesterUnit;
+    /** Canonical unit assignment in the enrollment's current course period. */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "course_unit_placement_id", nullable = false)
+    private CourseUnitPlacement courseUnitPlacement;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "attempt_type", nullable = false, length = 20)
@@ -37,7 +38,7 @@ public class StudentUnitRegistration {
     // elective two weeks in" from "student is still actively registered."
     // Also what makes proper duplicate-prevention possible - the DB
     // constraint should be "at most one ACTIVE registration per
-    // (enrollment_id, semester_unit_id)", enforced at the migration level,
+    // (enrollment_id, course_unit_placement_id), enforced at the migration level,
     // not just here.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

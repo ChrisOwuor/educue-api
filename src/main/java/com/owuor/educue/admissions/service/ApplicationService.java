@@ -1,7 +1,5 @@
 package com.owuor.educue.admissions.service;
 
-import com.owuor.educue.academics.entity.Course;
-import com.owuor.educue.academics.repository.CourseRepository;
 import com.owuor.educue.admissions.dto.ApplicationDocumentResponse;
 import com.owuor.educue.admissions.dto.ApplicationResponse;
 import com.owuor.educue.admissions.dto.CreateApplicationRequest;
@@ -11,7 +9,6 @@ import com.owuor.educue.admissions.enums.DocumentType;
 import com.owuor.educue.admissions.repository.ApplicationDocumentRepository;
 import com.owuor.educue.admissions.repository.ApplicationRepository;
 import com.owuor.educue.admissions.repository.IntakeCourseRepository;
-import com.owuor.educue.admissions.repository.IntakeRepository;
 import com.owuor.educue.common.storage.FileStorageService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,37 +28,21 @@ public class ApplicationService {
 
     private final ApplicationRepository applicationRepository;
     private final ApplicationDocumentRepository documentRepository;
-    private final IntakeRepository intakeRepository;
     private final IntakeCourseRepository intakeCourseRepository;
-    private final CourseRepository courseRepository;
     private final FileStorageService fileStorageService;
 
     public ApplicationResponse submit(CreateApplicationRequest request) {
-        Intake intake = intakeRepository.findById(request.intakeId())
-                .orElseThrow(() -> new EntityNotFoundException("Intake not found"));
+        IntakeCourse intakeCourse = intakeCourseRepository.findById(request.intakeCourseId())
+                .orElseThrow(() -> new EntityNotFoundException("Intake course not found"));
+        Intake intake = intakeCourse.getIntake();
 
         if (intake.getApplicationDeadline().isBefore(LocalDate.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The application deadline for this intake has passed");
         }
 
-        Course course = courseRepository.findById(request.courseId())
-                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
-
-        // The actual integrity check this whole flow exists for: you
-        // cannot apply to a course that isn't actually open for this
-        // specific intake, even if both the intake and course
-        // individually exist - someone could otherwise forge a request
-        // with mismatched ids.
-        if (!intakeCourseRepository.existsByIntakeIdAndCourseId(intake.getId(), course.getId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "This course is not open for the selected intake"
-            );
-        }
-
         Application application = new Application();
-        application.setIntake(intake);
-        application.setCourse(course);
+        application.setApplicationNumber("APP-" + UUID.randomUUID().toString().toUpperCase());
+        application.setIntakeCourse(intakeCourse);
         application.setFullName(request.fullName());
         application.setEmail(request.email());
         application.setPhone(request.phone());
@@ -107,7 +89,7 @@ public class ApplicationService {
     }
 
     public List<ApplicationResponse> getByIntake(Long intakeId) {
-        return applicationRepository.findByIntakeId(intakeId).stream()
+        return applicationRepository.findByIntakeCourseIntakeId(intakeId).stream()
                 .map(app -> ApplicationResponse.from(app, getDocumentResponses(app.getId())))
                 .toList();
     }

@@ -6,10 +6,14 @@ import com.owuor.educue.admissions.enums.IntakeStatus;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public record IntakeResponse(
         Long id,
+        UUID uuid,
         String name,
+        UUID academicYearUuid,
+        String academicYearCode,
         LocalDate startDate,
         LocalDate applicationDeadline,
         IntakeStatus status,
@@ -18,12 +22,15 @@ public record IntakeResponse(
     public static IntakeResponse from(Intake intake, List<IntakeCourse> intakeCourses) {
         return new IntakeResponse(
                 intake.getId(),
+                intake.getUuid(),
                 intake.getName(),
+                intake.getAcademicYear().getUuid(),
+                intake.getAcademicYear().getCode(),
                 intake.getStartDate(),
                 intake.getApplicationDeadline(),
                 intake.getStatus(),
                 intakeCourses.stream()
-                        .map(ic -> CourseSummary.from(ic.getCourse()))
+                        .map(CourseSummary::from)
                         .toList()
         );
     }

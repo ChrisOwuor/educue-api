@@ -1,7 +1,8 @@
 package com.owuor.educue.admissions.entity;
 
-import com.owuor.educue.academics.entity.Course;
 import com.owuor.educue.admissions.enums.IntakeStatus;
+import com.owuor.educue.institution.entity.AcademicYear;
+
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -41,6 +42,8 @@ public class Intake {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "academic_year_id", nullable = false)
+    private AcademicYear academicYear;
 
 }

@@ -1,10 +1,11 @@
 package com.owuor.educue.academics.service;
 
-import com.owuor.educue.academics.dto.CourseDTO;
-import com.owuor.educue.academics.dto.CourseFilterRequest;
-import com.owuor.educue.academics.dto.CreateCourseRequest;
-import com.owuor.educue.academics.dto.CourseResponse;
+import com.owuor.educue.academics.dto.*;
+import com.owuor.educue.academics.entity.AcademicPeriod;
 import com.owuor.educue.academics.entity.Course;
+import com.owuor.educue.academics.entity.CourseAcademicPeriod;
+import com.owuor.educue.academics.repository.AcademicPeriodRepository;
+import com.owuor.educue.academics.repository.CourseAcademicPeriodRepository;
 import com.owuor.educue.academics.repository.CourseRepository;
 import com.owuor.educue.academics.repository.CourseSpecification;
 import com.owuor.educue.common.dto.ApiPageResponse;
@@ -18,8 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.HashSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,6 +32,8 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final DepartmentRepository departmentRepository;
+    private final AcademicPeriodRepository academicPeriodRepository;
+    private final CourseAcademicPeriodRepository courseAcademicPeriodRepository;
 
     public ApiPageResponse<CourseDTO> getCourses(CourseFilterRequest req) {
 
@@ -71,6 +76,7 @@ public class CourseService {
                 : Sort.by(parts[0]).ascending();
     }
 
+    @Transactional
     public CourseResponse create(CreateCourseRequest req) {
 
 
@@ -88,15 +94,51 @@ public class CourseService {
         Course course = new Course();
         course.setDepartment(dept);
         course.setCode(code);
+        course.setDurationUnit(req.getDurationUnit());
         course.setName(req.getName());
         course.setDurationValue(req.getDurationValue());
-        course.setDurationUnit(req.getDurationUnit());
-        course.setTotalSemesters(req.getTotalSemesters());
+        course.setQualificationType(req.getQualificationType());
+        course.setStudyMode(req.getStudyMode());
+        course.setTotalCredits(req.getTotalCredits());
+        course.setAwardTitle(req.getAwardTitle());
+        course.setActive(req.getActive() == null || req.getActive());
         Course saved = courseRepository.save(course);
+
+        var seenPeriods = new HashSet<UUID>();
+        var seenPositions = new HashSet<Integer>();
+        List<CourseAcademicPeriod> coursePeriods = req.getAcademicPeriods().stream()
+                .map(item -> {
+                    if (!seenPeriods.add(item.academicPeriodUuid())) {
+                        throw new IllegalArgumentException("An academic period can only be added once to a course");
+                    }
+                    if (!seenPositions.add(item.position())) {
+                        throw new IllegalArgumentException("Each course academic period must have a unique position");
+                    }
+                    AcademicPeriod period = academicPeriodRepository.findByUuid(item.academicPeriodUuid())
+                            .orElseThrow(() -> new EntityNotFoundException(
+                                    "Academic period not found: " + item.academicPeriodUuid()));
+                    if (!period.isActive()) {
+                        throw new IllegalArgumentException("Inactive academic periods cannot be added to a course");
+                    }
+                    CourseAcademicPeriod coursePeriod = new CourseAcademicPeriod();
+                    coursePeriod.setCourse(saved);
+                    coursePeriod.setAcademicPeriod(period);
+                    coursePeriod.setPosition(item.position());
+                    return coursePeriod;
+                })
+                .sorted(java.util.Comparator.comparing(CourseAcademicPeriod::getPosition))
+                .toList();
+
+        courseAcademicPeriodRepository.saveAll(coursePeriods);
+        for (int i = 0; i < coursePeriods.size() - 1; i++) {
+            coursePeriods.get(i).setNextPeriod(coursePeriods.get(i + 1));
+        }
+        courseAcademicPeriodRepository.saveAll(coursePeriods);
 
         return map(saved);
     }
 
+    @Transactional(readOnly = true)
     public CourseResponse getByUuid(UUID uuid) {
         Course course = courseRepository.findByUuid(uuid)
                 .orElseThrow(() -> new EntityNotFoundException("Course not found"));
@@ -118,24 +160,34 @@ public class CourseService {
         res.setCode(c.getCode());
         res.setName(c.getName());
         res.setDurationValue(c.getDurationValue());
-        res.setDurationUnit(c.getDurationUnit());
-        res.setTotalSemesters(c.getTotalSemesters());
         res.setDepartmentName(c.getDepartment().getName());
+        res.setQualificationType(c.getQualificationType());
+        res.setStudyMode(c.getStudyMode());
+        res.setTotalCredits(c.getTotalCredits());
+        res.setAwardTitle(c.getAwardTitle());
+        res.setActive(c.isActive());
+        res.setAcademicPeriods(courseAcademicPeriodRepository.findByCourseIdOrderByPosition(c.getId()).stream()
+                .map(CourseAcademicPeriodResponse::from)
+                .toList());
+
         return res;
     }
 
     public CourseDTO toDto(Course c) {
         CourseDTO dto = new CourseDTO();
         dto.setId(c.getId());
+        dto.setQualificationType(c.getQualificationType());
 
         dto.setUuid(c.getUuid());
+        dto.setDurationUnit(c.getDurationUnit());
         dto.setCode(c.getCode());
         dto.setName(c.getName());
         dto.setDepartmentName(c.getDepartment().getName());
         dto.setDurationValue(c.getDurationValue());
-        dto.setDurationUnit(c.getDurationUnit());
-        dto.setTotalSemesters(c.getTotalSemesters());
         dto.setActive(c.isActive());
+        dto.setStudyMode(c.getStudyMode());
+        dto.setTotalCredits(c.getTotalCredits());
+        dto.setAwardTitle(c.getAwardTitle());
 
         return dto;
     }

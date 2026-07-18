@@ -15,12 +15,15 @@ public class FeeStructureResponse {
 
     private Long intakeId;
     private String intakeName;
+    private Long intakeCourseId;
 
     private Long courseId;
     private String courseName;
 
-    private Long semesterId;
-    private String semesterName;
+    private java.util.UUID courseAcademicPeriodUuid;
+    private String academicPeriodCode;
+    private String academicPeriodName;
+    private Integer academicPeriodPosition;
 
     private BigDecimal total;
 

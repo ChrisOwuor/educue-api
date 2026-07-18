@@ -17,13 +17,12 @@ public record EnrollmentResponse(
 
         String courseName,
 
-        String curriculumName,
+        Long courseAcademicPeriodId,
 
-        String semesterName,
+        String academicPeriodName,
 
         String status,
-        Long studentUserId,
-        Long appliedSemesterId
+        Long studentUserId
 
 ) {
 }

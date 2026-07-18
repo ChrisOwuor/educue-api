@@ -17,9 +17,7 @@ public class EnrollmentFilterRequest {
 
     private Long courseId;
 
-    private Long curriculumId;
-
-    private Long semesterId;
+    private Long courseAcademicPeriodId;
 
     private String status;
 }

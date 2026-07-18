@@ -1,8 +1,11 @@
 package com.owuor.educue.finance.controller;
 
-import com.owuor.educue.finance.dto.ChargeStudentRequest;
 import com.owuor.educue.finance.dto.FeeLedgerResponse;
 import com.owuor.educue.finance.service.FeeLedgerService;
+import com.owuor.educue.finance.dto.DebitStudentRequest;
+import com.owuor.educue.finance.dto.ReverseLedgerEntryRequest;
+import com.owuor.educue.users.entity.User;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -11,6 +14,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import com.owuor.educue.common.report.ProfessionalPdfService;
 
 @RestController
 @RequestMapping("/api/finance/ledger")
@@ -18,18 +25,29 @@ import java.util.List;
 public class FeeLedgerController {
 
     private final FeeLedgerService feeLedgerService;
+    private final ProfessionalPdfService pdfService;
 
-    /**
-     * Charge a student based on a fee structure.
-     * Creates a TUITION_BILL entry in their fee ledger.
-     */
+    /** Posts an auditable debit note for a resit, retake, penalty or other approved charge. */
     @PreAuthorize("hasAnyRole('ADMIN', 'FINANCE')")
-    @PostMapping("/charge")
+    @PostMapping("/debits")
     @ResponseStatus(HttpStatus.CREATED)
-    public FeeLedgerResponse chargeStudent(
-            @Valid @RequestBody ChargeStudentRequest request
+    public FeeLedgerResponse debitStudent(
+            @Valid @RequestBody DebitStudentRequest request,
+            @AuthenticationPrincipal User currentUser
     ) {
-        return feeLedgerService.chargeStudent(request);
+        return feeLedgerService.debitStudent(request, currentUser.getId());
+    }
+
+    /** Creates an opposite credit/debit note and preserves the original entry for audit. */
+    @PreAuthorize("hasAnyRole('ADMIN', 'FINANCE')")
+    @PostMapping("/{ledgerId}/reverse")
+    @ResponseStatus(HttpStatus.CREATED)
+    public FeeLedgerResponse reverse(
+            @PathVariable Long ledgerId,
+            @Valid @RequestBody ReverseLedgerEntryRequest request,
+            @AuthenticationPrincipal User currentUser
+    ) {
+        return feeLedgerService.reverse(ledgerId, request, currentUser.getId());
     }
 
     /**
@@ -52,5 +70,22 @@ public class FeeLedgerController {
             @PathVariable Long studentId
     ) {
         return feeLedgerService.getStudentBalance(studentId);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'FINANCE')")
+    @GetMapping("/export")
+    public ResponseEntity<byte[]> exportAllFinancialData() {
+        var entries = feeLedgerService.getAllLedgerEntries();
+        var details = new java.util.LinkedHashMap<String, String>();
+        details.put("Ledger entries", String.valueOf(entries.size()));
+        var rows = entries.stream().map(item -> java.util.List.of(
+                item.getPostingDate().toString(), item.getDocumentNumber(), item.getStudentName(),
+                item.getAcademicPeriodName() == null ? "" : item.getAcademicPeriodName(),
+                item.getDescription(), item.getDebit().toString(), item.getCredit().toString(),
+                item.getRunningBalance().toString())).toList();
+        byte[] pdf = pdfService.tableReport("Financial Ledger Report", details,
+                java.util.List.of("Posting date", "Document no.", "Student", "Academic period", "Description", "Debit", "Credit", "Balance"), rows);
+        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=financial-ledger.pdf")
+                .contentType(MediaType.APPLICATION_PDF).body(pdf);
     }
 }

@@ -4,18 +4,21 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDate;
+import java.util.UUID;
 
 @Getter
 @Setter
 public class CreateTrainerAssignmentRequest {
 
-    @NotNull(message = "Trainer is required.")
-    private Long trainerId;
+    @NotNull(message = "Lecturer is required.")
+    private Long lecturerId;
 
-    @NotNull(message = "Semester unit is required.")
-    private Long semesterUnitId;
+    @NotNull(message = "Course unit placement is required.")
+    private UUID courseUnitPlacementUuid;
 
-    @NotNull(message = "Effective from date is required.")
-    private LocalDate effectiveFrom;
+    @NotNull(message = "Effective-from academic year is required.")
+    private UUID effectiveFromAcademicYearUuid;
+
+    /** Optional final academic year; null keeps the allocation open-ended. */
+    private UUID effectiveToAcademicYearUuid;
 }

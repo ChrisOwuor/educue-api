@@ -15,7 +15,7 @@ public record MarksEntryRowResponse(
 
         String studentName,
 
-        Long semesterUnitId,
+        Long courseUnitPlacementId,
 
         String unitCode,
 

@@ -1,14 +1,14 @@
 package com.owuor.educue.admissions.entity;
 
 import com.owuor.educue.academics.entity.Course;
-import com.owuor.educue.academics.entity.CourseCurriculum;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "intake_courses")
+@Table(name = "intake_courses", uniqueConstraints =
+        @UniqueConstraint(name = "uk_intake_course", columnNames = {"intake_id", "course_id"}))
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,7 +18,7 @@ public class IntakeCourse {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "intake_id", nullable = false)
     private Intake intake;
 
@@ -26,9 +26,9 @@ public class IntakeCourse {
     // might only launch starting next intake. This is what the public
     // application form reads from to populate its course dropdown.
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
 
 
-}
+} 

@@ -2,9 +2,7 @@ package com.owuor.educue.admissions.controllers;
 
 import com.owuor.educue.admissions.dto.ApplicationDocumentResponse;
 import com.owuor.educue.admissions.dto.ApplicationResponse;
-import com.owuor.educue.admissions.dto.ApplicationResponseDto;
 import com.owuor.educue.admissions.dto.CreateApplicationRequest;
-import com.owuor.educue.admissions.entity.Application;
 import com.owuor.educue.admissions.enums.DocumentType;
 import com.owuor.educue.admissions.service.AdmissionApprovalService;
 import com.owuor.educue.admissions.service.ApplicationService;
@@ -34,17 +32,15 @@ public class ApplicationController {
 
     @PreAuthorize("hasAuthority('edit_student')")
     @PutMapping("/{id}/approve")
-    public ResponseEntity<ApplicationResponseDto> approve(
+    public ResponseEntity<ApplicationResponse> approve(
             @PathVariable Long id,
             @AuthenticationPrincipal User currentUser
     ) {
-       Application application = admissionApprovalService.approve(
+       admissionApprovalService.approve(
                 id,
                 currentUser
         );
-       ApplicationResponseDto applicationResponseDto = new ApplicationResponseDto(application.getFullName(),application.getStatus().toString());
-        // Return the newly updated application
-        return ResponseEntity.ok(applicationResponseDto);
+        return ResponseEntity.ok(applicationService.getById(id));
     }
 
     // PUBLIC - no auth. This is the actual endpoint PublicApplyPage's

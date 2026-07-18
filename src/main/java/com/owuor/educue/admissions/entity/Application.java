@@ -1,6 +1,5 @@
 package com.owuor.educue.admissions.entity;
 
-import com.owuor.educue.academics.entity.Course;
 import com.owuor.educue.admissions.enums.ApplicationStatus;
 import com.owuor.educue.users.entity.User;
 import jakarta.persistence.*;
@@ -26,14 +25,12 @@ public class Application {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "intake_id", nullable = false)
-    private Intake intake;
+    @Column(name = "application_number", nullable = false, unique = true, updatable = false, length = 40)
+    private String applicationNumber;
 
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "course_id", nullable = false)
-    private Course course;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "intake_course_id", nullable = false)
+    private IntakeCourse intakeCourse;
 
     @Column(name = "full_name", nullable = false, length = 150)
     private String fullName;

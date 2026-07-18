@@ -7,9 +7,11 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 public record CreateIntakeRequest(
         @NotBlank String name,
+        @NotNull UUID academicYearUuid,
         @NotNull @FutureOrPresent LocalDate startDate,
         @NotNull @FutureOrPresent LocalDate applicationDeadline,
         // Deliberately required and non-empty: an Intake with zero courses

@@ -1,8 +1,11 @@
 package com.owuor.educue.academics.dto;
 
+import com.owuor.educue.academics.enums.QualificationType;
+import com.owuor.educue.academics.enums.StudyMode;
 import lombok.Data;
 
 import java.util.UUID;
+import java.util.List;
 
 @Data
 public class CourseResponse {
@@ -10,9 +13,13 @@ public class CourseResponse {
     private UUID uuid;
     private String code;
     private String name;
-    private Integer durationYears;
-    private Integer totalSemesters;
     private String departmentName;
-    private String durationUnit;
     private Integer durationValue;
+    private QualificationType qualificationType;
+    private StudyMode studyMode;
+    private Integer totalCredits;
+    private String awardTitle;
+    private String durationUnit;
+    private boolean active;
+    private List<CourseAcademicPeriodResponse> academicPeriods;
 }

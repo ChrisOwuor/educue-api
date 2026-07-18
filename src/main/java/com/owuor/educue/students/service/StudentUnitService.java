@@ -1,7 +1,7 @@
 package com.owuor.educue.students.service;
 
-import com.owuor.educue.academics.entity.SemesterUnit;
-import com.owuor.educue.academics.repository.SemesterUnitRepository;
+import com.owuor.educue.academics.entity.CourseUnitPlacement;
+import com.owuor.educue.academics.repository.CourseUnitPlacementRepository;
 import com.owuor.educue.students.dto.StudentUnitResponse;
 import com.owuor.educue.students.entity.Enrollment;
 import com.owuor.educue.students.repository.EnrollmentRepository;
@@ -17,12 +17,15 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class StudentUnitService {
 
-    private final SemesterUnitRepository semesterUnitRepository;
+    private final EnrollmentRepository enrollmentRepository;
+    private final CourseUnitPlacementRepository placementRepository;
 
-    public List<StudentUnitResponse> getCurrentSemesterUnits(Long userId) {
-
-        return semesterUnitRepository
-                .findCurrentSemesterUnitsByUserId(userId)
+    public List<StudentUnitResponse> getCurrentPeriodUnits(Long userId) {
+        Enrollment enrollment = enrollmentRepository.findByStudentUserId(userId)
+                .orElseThrow(() -> new EntityNotFoundException("Active enrollment not found"));
+        int intakeYear = enrollment.getIntakeCourse().getIntake().getStartDate().getYear();
+        return placementRepository
+                .findActiveForPeriodAndIntakeYear(enrollment.getCurrentCourseAcademicPeriod().getId(), intakeYear)
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -30,17 +33,19 @@ public class StudentUnitService {
 
 
     private StudentUnitResponse toResponse(
-            SemesterUnit item
+            CourseUnitPlacement item
     ) {
         return StudentUnitResponse.builder()
-                .semesterUnitId(item.getId())
-                .semesterId(item.getSemester().getId())
+                .courseUnitPlacementId(item.getId())
+                .courseUnitPlacementUuid(item.getUuid())
+                .courseAcademicPeriodUuid(item.getCourseAcademicPeriod().getUuid())
                 .unitId(item.getUnit().getId())
                 .unitCode(item.getUnit().getCode())
                 .unitName(item.getUnit().getName())
                 .creditHours(item.getUnit().getCreditHours())
-                .isMandatory(item.isMandatory())
-                .category(item.getCategory())
+                .unitType(item.getUnitType())
+                .academicPeriodCode(item.getCourseAcademicPeriod().getAcademicPeriod().getCode())
+                .academicPeriodName(item.getCourseAcademicPeriod().getAcademicPeriod().getName())
                 .build();
     }
 }

@@ -22,13 +22,17 @@ public record StudentProfileResponse(
 
         String courseName,
 
-        String curriculumName,
-
         Integer currentYear,
 
-        Integer currentSemester,
+        java.util.UUID courseAcademicPeriodUuid,
 
-        String currentSemesterName,
+        String academicPeriodCode,
+
+        String academicPeriodName,
+
+        String academicPeriodType,
+
+        Integer academicPeriodNumber,
 
         String enrollmentStatus,
 
