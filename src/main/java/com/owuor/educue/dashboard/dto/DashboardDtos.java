@@ -18,7 +18,9 @@ public final class DashboardDtos {
             BigDecimal totalCharges, BigDecimal outstandingBalance,
             long successfulPayments, long pendingPayments,
             List<TimePoint> monthlyCashFlow, List<Breakdown> paymentMethods,
-            List<CourseSeries> collectionByCourse, List<Activity> recentPayments) {}
+            List<Breakdown> chargePosition, List<Breakdown> paymentStatuses,
+            List<Breakdown> monthlyCollections, List<Breakdown> yearlyCollections,
+            List<Activity> recentPayments) {}
 
     public record AdminDashboard(
             long totalStudents, long activeCourses, long pendingApplications,

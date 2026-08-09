@@ -1,0 +1,472 @@
+name: Educue Backend CI/CD
+
+on:
+  push:
+    branches:
+      - feature
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+
+jobs:
+
+  # ==========================================================
+  # CI - TEST AND BUILD
+  # ==========================================================
+
+  build:
+    name: Test and Build
+    runs-on: ubuntu-latest
+
+    # Spring's integration tests start the full application context. Flyway
+    # therefore needs a real PostgreSQL database before Hibernate can start.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: educue_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: admin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d educue_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/educue_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: admin
+      APP_TIME_ZONE: Africa/Nairobi
+      JWT_SECRET: ci-only-educue-jwt-secret-with-more-than-sixty-four-characters-123456789
+      PASSWORD_RESET_MAIL_ENABLED: "false"
+
+    steps:
+
+      # -------------------------------------------------------
+      # Checkout source code
+      # -------------------------------------------------------
+
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+
+      # -------------------------------------------------------
+      # Java 21
+      # -------------------------------------------------------
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+
+      # -------------------------------------------------------
+      # Maven wrapper
+      # -------------------------------------------------------
+
+      - name: Make Maven wrapper executable
+        run: chmod +x mvnw
+
+
+      # -------------------------------------------------------
+      # Test + build application
+      # -------------------------------------------------------
+
+      - name: Test and build
+        run: ./mvnw -B clean verify
+
+
+      # -------------------------------------------------------
+      # If tests fail, print the actual Surefire errors
+      # -------------------------------------------------------
+
+      - name: Show test failure reports
+        if: failure()
+        shell: bash
+        run: |
+          echo "================================================"
+          echo "SUREFIRE TEST FAILURE REPORTS"
+          echo "================================================"
+          echo
+
+          if [ -d target/surefire-reports ]; then
+
+            find target/surefire-reports \
+              -type f \
+              -name "*.txt" \
+              -print \
+              -exec cat {} \;
+
+          else
+
+            echo "No Surefire reports were generated."
+
+          fi
+
+
+      # -------------------------------------------------------
+      # Preserve test reports when CI fails
+      # -------------------------------------------------------
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-${{ github.sha }}
+          path: target/surefire-reports/
+          retention-days: 7
+          if-no-files-found: ignore
+
+
+      # -------------------------------------------------------
+      # Create normalized production artifact
+      #
+      # Only needed for main production deployments.
+      # -------------------------------------------------------
+
+      - name: Prepare deployment artifact
+        if: >
+          (github.event_name == 'push' &&
+           github.ref == 'refs/heads/main') ||
+          (github.event_name == 'workflow_dispatch' &&
+           github.ref == 'refs/heads/main')
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          mkdir -p deployment
+
+          JAR="$(
+            find target \
+              -maxdepth 1 \
+              -type f \
+              -name '*.jar' \
+              ! -name '*sources.jar' \
+              ! -name '*javadoc.jar' \
+              | head -n 1
+          )"
+
+          if [ -z "$JAR" ]; then
+            echo "No deployable JAR found in target/"
+            exit 1
+          fi
+
+          echo "Deployable JAR:"
+          echo "$JAR"
+          echo
+
+          cp "$JAR" deployment/educue.jar
+
+          sha256sum deployment/educue.jar \
+            > deployment/educue.jar.sha256
+
+          echo "Prepared deployment artifact:"
+          ls -lh deployment/
+
+
+      # -------------------------------------------------------
+      # Pass production JAR to deploy job
+      # -------------------------------------------------------
+
+      - name: Upload deployment artifact
+        if: >
+          (github.event_name == 'push' &&
+           github.ref == 'refs/heads/main') ||
+          (github.event_name == 'workflow_dispatch' &&
+           github.ref == 'refs/heads/main')
+        uses: actions/upload-artifact@v7
+        with:
+          name: educue-backend-${{ github.sha }}
+          path: deployment/
+          retention-days: 7
+          if-no-files-found: error
+
+
+
+  # ==========================================================
+  # PRODUCTION DEPLOYMENT
+  # ==========================================================
+
+  deploy-production:
+    name: Deploy Production
+
+    needs:
+      - build
+
+    if: >
+      (github.event_name == 'push' &&
+       github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' &&
+       github.ref == 'refs/heads/main')
+
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+      url: https://portal.educue.ebadynamics.co.ke
+
+    concurrency:
+      group: educue-backend-production
+      cancel-in-progress: false
+
+    steps:
+
+      # -------------------------------------------------------
+      # Download exact artifact produced by CI
+      # -------------------------------------------------------
+
+      - name: Download deployment artifact
+        uses: actions/download-artifact@v8
+        with:
+          name: educue-backend-${{ github.sha }}
+          path: deployment
+
+
+      # -------------------------------------------------------
+      # Verify JAR integrity
+      # -------------------------------------------------------
+
+      - name: Verify artifact checksum
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          cd deployment
+
+          echo "Checking artifact:"
+          ls -lh
+
+          sha256sum --check educue.jar.sha256
+
+          test -s educue.jar
+
+          echo
+          echo "Artifact checksum verified."
+
+
+      # -------------------------------------------------------
+      # Verify production GitHub configuration exists
+      # -------------------------------------------------------
+
+      - name: Validate deployment configuration
+        env:
+          PROD_HOST: ${{ vars.PROD_HOST }}
+          PROD_USER: ${{ vars.PROD_USER }}
+          PROD_SSH_PRIVATE_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          if [ -z "$PROD_HOST" ]; then
+            echo "PROD_HOST is missing."
+            exit 1
+          fi
+
+          if [ -z "$PROD_USER" ]; then
+            echo "PROD_USER is missing."
+            exit 1
+          fi
+
+          if [ -z "$PROD_SSH_PRIVATE_KEY" ]; then
+            echo "PROD_SSH_PRIVATE_KEY is missing."
+            exit 1
+          fi
+
+          if [ -z "$PROD_SSH_KNOWN_HOSTS" ]; then
+            echo "PROD_SSH_KNOWN_HOSTS is missing."
+            exit 1
+          fi
+
+          echo "Production deployment configuration exists."
+
+
+      # -------------------------------------------------------
+      # Configure SSH
+      # -------------------------------------------------------
+
+      - name: Configure SSH
+        env:
+          PROD_SSH_PRIVATE_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          install -d -m 700 "$HOME/.ssh"
+
+          printf '%s\n' "$PROD_SSH_PRIVATE_KEY" \
+            > "$HOME/.ssh/id_ed25519"
+
+          chmod 600 "$HOME/.ssh/id_ed25519"
+
+          printf '%s\n' "$PROD_SSH_KNOWN_HOSTS" \
+            > "$HOME/.ssh/known_hosts"
+
+          chmod 600 "$HOME/.ssh/known_hosts"
+
+          # Validate private key
+          ssh-keygen -y \
+            -f "$HOME/.ssh/id_ed25519" \
+            > /dev/null
+
+          echo "SSH configuration ready."
+
+
+      # -------------------------------------------------------
+      # Verify production server connection
+      # -------------------------------------------------------
+
+      - name: Verify production SSH
+        env:
+          PROD_HOST: ${{ vars.PROD_HOST }}
+          PROD_USER: ${{ vars.PROD_USER }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          ssh \
+            -i "$HOME/.ssh/id_ed25519" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=10 \
+            "$PROD_USER@$PROD_HOST" \
+            'echo "Production SSH connection successful."'
+
+
+
+      # -------------------------------------------------------
+      # Upload the JAR
+      #
+      # GitHub cannot directly write into /opt/educue.
+      # It uploads into the deploy user's incoming directory.
+      # -------------------------------------------------------
+
+      - name: Upload application
+        env:
+          PROD_HOST: ${{ vars.PROD_HOST }}
+          PROD_USER: ${{ vars.PROD_USER }}
+          RELEASE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          echo "Uploading release:"
+          echo "$RELEASE_SHA"
+
+          scp \
+            -i "$HOME/.ssh/id_ed25519" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            deployment/educue.jar \
+            "$PROD_USER@$PROD_HOST:/home/deploy/incoming/$RELEASE_SHA.jar"
+
+          echo
+          echo "Upload successful."
+
+
+      # -------------------------------------------------------
+      # Run server-side deployment
+      #
+      # /usr/local/sbin/educue-deploy handles:
+      #
+      # - versioned release directory
+      # - current symlink
+      # - systemd restart
+      # - readiness health check
+      # - automatic rollback
+      # - old release cleanup
+      # -------------------------------------------------------
+
+      - name: Deploy release
+        env:
+          PROD_HOST: ${{ vars.PROD_HOST }}
+          PROD_USER: ${{ vars.PROD_USER }}
+          RELEASE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          ssh \
+            -i "$HOME/.ssh/id_ed25519" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "$PROD_USER@$PROD_HOST" \
+            "sudo /usr/local/sbin/educue-deploy '$RELEASE_SHA'"
+
+
+      # -------------------------------------------------------
+      # Confirm current symlink points to this exact release
+      # -------------------------------------------------------
+
+      - name: Verify deployed release
+        env:
+          PROD_HOST: ${{ vars.PROD_HOST }}
+          PROD_USER: ${{ vars.PROD_USER }}
+          RELEASE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+
+          DEPLOYED_RELEASE="$(
+            ssh \
+              -i "$HOME/.ssh/id_ed25519" \
+              -o BatchMode=yes \
+              -o StrictHostKeyChecking=yes \
+              "$PROD_USER@$PROD_HOST" \
+              "readlink -f /opt/educue/current"
+          )"
+
+          echo "Current production release:"
+          echo "$DEPLOYED_RELEASE"
+
+          if [[ "$DEPLOYED_RELEASE" != *"$RELEASE_SHA"* ]]; then
+
+            echo
+            echo "Expected release:"
+            echo "$RELEASE_SHA"
+
+            echo
+            echo "Production current symlink does not match deployed commit."
+
+            exit 1
+
+          fi
+
+          echo
+          echo "Production release verified."
+
+
+      # -------------------------------------------------------
+      # GitHub Actions deployment summary
+      # -------------------------------------------------------
+
+      - name: Deployment summary
+        env:
+          RELEASE_SHA: ${{ github.sha }}
+        shell: bash
+        run: |
+          {
+            echo "## Educue Production Deployment"
+            echo
+            echo "✅ Backend deployment successful"
+            echo
+            echo "**Commit:** \`$RELEASE_SHA\`"
+            echo
+            echo "**Environment:** production"
+            echo
+            echo "**Application:** https://portal.educue.ebadynamics.co.ke"
+          } >> "$GITHUB_STEP_SUMMARY"

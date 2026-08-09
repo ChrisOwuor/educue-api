@@ -45,7 +45,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             // Loaded fresh from DB on every request (not just trusting JWT
             // claims) - this means deactivating a user takes effect
             // immediately, not just when their token expires.
-            Optional<User> userOpt = userRepository.findById(userId);
+            Optional<User> userOpt = userRepository.findForAuthenticationById(userId);
 
             if (userOpt.isPresent() && userOpt.get().isEnabled() && userOpt.get().isAccountNonLocked()) {
                 User user = userOpt.get();

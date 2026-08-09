@@ -95,9 +95,16 @@ public class EnrollmentService {
                                 .getEmail()
                 )
                 .courseName(
-                        enrollment.getIntakeCourse().getCourse()
+                        enrollment.getCourse()
                                 .getName()
                 )
+                .courseId(enrollment.getCourse().getId())
+                .intakeId(enrollment.getIntake().getId())
+                .intakeName(enrollment.getIntake().getName())
+                .enrolledAcademicYearUuid(enrollment.getEnrolledAcademicYear().getUuid())
+                .enrolledAcademicYearCode(enrollment.getEnrolledAcademicYear().getCode())
+                .currentAcademicYearUuid(enrollment.getCurrentAcademicYear().getUuid())
+                .currentAcademicYearCode(enrollment.getCurrentAcademicYear().getCode())
                 .academicPeriodName(
                         enrollment.getCurrentCourseAcademicPeriod()
                                 .getAcademicPeriod().getName()
@@ -115,10 +122,17 @@ public class EnrollmentService {
         }
 
         String[] parts = sort.split(",");
-
-        return parts.length == 2
-                && parts[1].equalsIgnoreCase("desc")
-                ? Sort.by(parts[0]).descending()
-                : Sort.by(parts[0]).ascending();
+        String property = switch (parts[0]) {
+            case "admissionNumber" -> "student.admissionNumber";
+            case "studentName" -> "student.fullName";
+            case "course" -> "course.name";
+            case "academicPeriod" -> "currentCourseAcademicPeriod.academicPeriod.name";
+            case "status" -> "status";
+            case "id" -> "id";
+            default -> throw new IllegalArgumentException("Unsupported enrollment sort field: " + parts[0]);
+        };
+        Sort.Direction direction = parts.length == 2 && parts[1].equalsIgnoreCase("asc")
+                ? Sort.Direction.ASC : Sort.Direction.DESC;
+        return Sort.by(direction, property);
     }
 }

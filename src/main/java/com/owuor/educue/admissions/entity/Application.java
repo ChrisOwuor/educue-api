@@ -79,4 +79,13 @@ public class Application {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by_user_id")
     private User approvedBy;
+
+    @Column(name = "admission_pack_key", length = 500)
+    private String admissionPackKey;
+
+    @Column(name = "admission_pack_generated_at")
+    private LocalDateTime admissionPackGeneratedAt;
+
+    @Column(name = "admission_pack_error", length = 500)
+    private String admissionPackError;
 }

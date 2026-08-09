@@ -14,6 +14,8 @@ import com.owuor.educue.students.entity.ExamCard;
 import com.owuor.educue.students.repository.EnrollmentRepository;
 import com.owuor.educue.students.repository.ExamCardRepository;
 import com.owuor.educue.students.repository.StudentUnitRegistrationRepository;
+import com.owuor.educue.finance.repository.FeeLedgerRepository;
+import com.owuor.educue.academics.enums.AttemptType;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,20 +36,33 @@ public class ExamCardService {
     private final StudentUnitRegistrationRepository registrationRepository;
     private final ExamCardRepository examCardRepository;
     private final InstitutionProfileRepository institutionRepository;
+    private final FeeLedgerRepository feeLedgerRepository;
 
-    @Value("${app.public-base-url:http://localhost:8080}")
-    private String publicBaseUrl;
+    @Value("${app.frontend-base-url:http://localhost:5173}")
+    private String frontendBaseUrl;
 
     @Transactional
-    public byte[] generateForStudent(Long userId) {
+    public byte[] generateForStudent(Long userId, AttemptType attemptType, UUID courseAcademicPeriodUuid) {
         var enrollment = enrollmentRepository.findByStudentUserId(userId)
                 .orElseThrow(() -> new EntityNotFoundException("Student enrollment not found"));
-        var period = enrollment.getCurrentCourseAcademicPeriod();
+        AttemptType selectedType = attemptType == null ? AttemptType.NORMAL : attemptType;
+        UUID selectedPeriodUuid = courseAcademicPeriodUuid;
+        if (selectedType == AttemptType.NORMAL && selectedPeriodUuid == null) {
+            selectedPeriodUuid = enrollment.getCurrentCourseAcademicPeriod().getUuid();
+        }
+        final UUID periodFilter = selectedPeriodUuid;
         var registrations = registrationRepository
-                .findByEnrollmentIdAndCourseUnitPlacementCourseAcademicPeriodIdAndStatus(
-                        enrollment.getId(), period.getId(), RegistrationStatus.ACTIVE);
+                .findByEnrollmentStudentUserIdAndStatusOrderByCourseUnitPlacementUnitCode(userId, RegistrationStatus.ACTIVE)
+                .stream().filter(r -> r.getAttemptType() == selectedType)
+                .filter(r -> periodFilter == null || r.getCourseUnitPlacement().getCourseAcademicPeriod().getUuid().equals(periodFilter))
+                .toList();
         if (registrations.isEmpty()) {
-            throw new IllegalStateException("No active exam units are registered for the current academic period");
+            throw new IllegalStateException("No active " + selectedType.name().toLowerCase() + " exam units match the selected academic period");
+        }
+        var period = registrations.getFirst().getCourseUnitPlacement().getCourseAcademicPeriod();
+        if (selectedType != AttemptType.NORMAL) {
+            var balance = feeLedgerRepository.getOutstandingBalance(enrollment.getStudent().getId());
+            if (balance.signum() > 0) throw new IllegalStateException("Please pay the outstanding balance of KES " + balance.toPlainString() + " before downloading this exam card");
         }
 
         ExamCard card = examCardRepository.findByStudentIdAndCourseAcademicPeriodId(
@@ -122,7 +137,7 @@ public class ExamCardService {
             note.addElement(new Paragraph("Code: " + card.getVerificationCode(), new Font(Font.COURIER, 7)));
             note.addElement(new Paragraph("Issued: " + card.getIssuedAt().format(DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")), new Font(Font.HELVETICA, 8)));
             verification.addCell(note);
-            PdfPCell qr = new PdfPCell(qrImage(publicBaseUrl + "/api/public/exam-cards/" + card.getVerificationCode()));
+            PdfPCell qr = new PdfPCell(qrImage(frontendBaseUrl.replaceAll("/+$", "") + "/verify/exam-card/" + card.getVerificationCode()));
             qr.setPadding(6); qr.setHorizontalAlignment(Element.ALIGN_CENTER); qr.setVerticalAlignment(Element.ALIGN_MIDDLE); verification.addCell(qr);
             document.add(verification);
 

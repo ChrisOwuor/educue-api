@@ -1,0 +1,5 @@
+package com.owuor.educue.finance.claims;
+import com.owuor.educue.finance.service.FeeLedgerService;import com.owuor.educue.students.repository.StudentRepository;import lombok.RequiredArgsConstructor;import org.springframework.stereotype.Service;import org.springframework.transaction.annotation.*;
+@Service @RequiredArgsConstructor public class DebitClaimItemProcessor {private final StudentRepository students;private final FeeLedgerService ledger;
+ @Transactional(propagation=Propagation.REQUIRES_NEW) public String post(DebitClaimBatch batch,DebitClaimSpreadsheet.Row row){var student=students.findById(row.studentId()).orElseThrow(()->new IllegalArgumentException("Student no longer exists"));if(!student.getAdmissionNumber().equalsIgnoreCase(row.admission()))throw new IllegalArgumentException("Admission number does not match student ID");String ref="CLAIM-"+batch.getUuid()+"-"+row.number();var entry=ledger.postDebitClaim(student,row.amount(),batch.getCategory(),batch.getReason(),ref,batch.getConfirmedBy());return entry==null?"Already posted":"Posted as "+entry.getDocumentNumber();}
+}

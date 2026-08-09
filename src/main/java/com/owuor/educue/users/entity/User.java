@@ -57,6 +57,12 @@ public class User implements UserDetails {
     @Column(length = 20)
     private String phone;
 
+    @Column(unique = true, length = 80)
+    private String username;
+
+    @Column(name = "avatar_url", length = 1000)
+    private String avatarUrl;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
     private Department department; // nullable - not every role (e.g. ADMIN) needs one

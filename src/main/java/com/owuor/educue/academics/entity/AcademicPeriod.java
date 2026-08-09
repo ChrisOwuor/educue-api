@@ -107,6 +107,9 @@ public class AcademicPeriod {
     @Column(name = "period_number", nullable = false)
     private Integer periodNumber;
 
+    @Column(name = "periods_per_year", nullable = false)
+    private Integer periodsPerYear;
+
     /*
      * Controls the order periods are displayed.
      *

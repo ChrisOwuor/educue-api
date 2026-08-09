@@ -31,16 +31,24 @@ public class EnrollmentSpecification {
                     ),
                     cb.like(
                             cb.lower(
-                                    root.get("intakeCourse").get("course")
+                                    root.get("course")
                                             .get("name")
                             ),
                             like
                     ),
                     cb.like(
                             cb.lower(
-                                    root.get("intakeCourse").get("course")
+                                    root.get("course")
                                             .get("code")
                             ),
+                            like
+                    ),
+                    cb.like(
+                            cb.lower(root.get("currentCourseAcademicPeriod").get("academicPeriod").get("name")),
+                            like
+                    ),
+                    cb.like(
+                            cb.lower(root.get("currentCourseAcademicPeriod").get("academicPeriod").get("code")),
                             like
                     )
             );
@@ -66,7 +74,7 @@ public class EnrollmentSpecification {
             }
 
             return cb.equal(
-                    root.get("intakeCourse").get("course").get("id"),
+                    root.get("course").get("id"),
                     courseId
             );
         };

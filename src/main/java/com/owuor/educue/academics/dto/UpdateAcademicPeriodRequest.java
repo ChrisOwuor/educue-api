@@ -11,6 +11,5 @@ public record UpdateAcademicPeriodRequest(
         AcademicPeriodType periodType,
         @Positive Integer yearNumber,
         @Positive Integer periodNumber,
-        @Positive Integer sequenceNumber,
         Boolean active
 ) {}

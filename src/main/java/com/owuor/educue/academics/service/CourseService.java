@@ -35,6 +35,7 @@ public class CourseService {
     private final AcademicPeriodRepository academicPeriodRepository;
     private final CourseAcademicPeriodRepository courseAcademicPeriodRepository;
 
+    @Transactional(readOnly = true)
     public ApiPageResponse<CourseDTO> getCourses(CourseFilterRequest req) {
 
         Pageable pageable = PageRequest.of(
@@ -106,6 +107,12 @@ public class CourseService {
 
         var seenPeriods = new HashSet<UUID>();
         var seenPositions = new HashSet<Integer>();
+        long finalPeriodCount = req.getAcademicPeriods().stream()
+                .filter(CourseAcademicPeriodRequest::finalPeriod)
+                .count();
+        if (finalPeriodCount != 1) {
+            throw new IllegalArgumentException("A course must have exactly one final academic period");
+        }
         List<CourseAcademicPeriod> coursePeriods = req.getAcademicPeriods().stream()
                 .map(item -> {
                     if (!seenPeriods.add(item.academicPeriodUuid())) {
@@ -124,10 +131,15 @@ public class CourseService {
                     coursePeriod.setCourse(saved);
                     coursePeriod.setAcademicPeriod(period);
                     coursePeriod.setPosition(item.position());
+                    coursePeriod.setFinalPeriod(item.finalPeriod());
                     return coursePeriod;
                 })
                 .sorted(java.util.Comparator.comparing(CourseAcademicPeriod::getPosition))
                 .toList();
+
+        if (!coursePeriods.get(coursePeriods.size() - 1).isFinalPeriod()) {
+            throw new IllegalArgumentException("Only the last course academic period can be final");
+        }
 
         courseAcademicPeriodRepository.saveAll(coursePeriods);
         for (int i = 0; i < coursePeriods.size() - 1; i++) {
@@ -146,6 +158,7 @@ public class CourseService {
         return map(course);
     }
 
+    @Transactional(readOnly = true)
     public List<CourseResponse> getByDepartment(Long departmentId) {
         return courseRepository.findByDepartmentId(departmentId)
                 .stream()

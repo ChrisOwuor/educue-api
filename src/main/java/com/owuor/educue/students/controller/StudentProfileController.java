@@ -2,7 +2,7 @@ package com.owuor.educue.students.controller;
 
 import com.owuor.educue.students.dto.StudentProfileResponse;
 import com.owuor.educue.finance.dto.FeeLedgerResponse;
-import com.owuor.educue.finance.dto.FeeStructureResponse;
+import com.owuor.educue.finance.service.PeriodFeeStructureService;
 import com.owuor.educue.students.service.StudentProfileService;
 import com.owuor.educue.users.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +23,7 @@ public class StudentProfileController {
 
     private final StudentProfileService studentProfileService;
     private final ProfessionalPdfService pdfService;
+    private final PeriodFeeStructureService periodFeeStructureService;
 
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/me")
@@ -31,16 +32,6 @@ public class StudentProfileController {
     ) {
 
         return ResponseEntity.ok(studentProfileService.getMyProfile(
-                currentUser.getId()
-        ));
-    }
-
-    @PreAuthorize("hasRole('STUDENT')")
-    @GetMapping("/me/fee-structure")
-    public ResponseEntity<FeeStructureResponse> getMyFeeStructure(
-            @AuthenticationPrincipal User currentUser
-    ) {
-        return ResponseEntity.ok(studentProfileService.getMyFeeStructure(
                 currentUser.getId()
         ));
     }
@@ -58,29 +49,15 @@ public class StudentProfileController {
     @PreAuthorize("hasRole('STUDENT')")
     @GetMapping("/me/fee-structure/pdf")
     public ResponseEntity<byte[]> downloadMyFeeStructure(@AuthenticationPrincipal User currentUser) {
-        FeeStructureResponse structure = studentProfileService.getMyFeeStructure(currentUser.getId());
+        var structure = periodFeeStructureService.getFees(currentUser);
         var details = new java.util.LinkedHashMap<String, String>();
-        details.put("Course", structure.getCourseName());
-        details.put("Intake", structure.getIntakeName());
-        details.put("Academic period", structure.getAcademicPeriodName());
-        details.put("Total", "KES " + structure.getTotal());
-        var rows = structure.getItems().stream().map(item -> java.util.List.of(item.getName(), "KES " + item.getAmount())).toList();
-        return pdf("my-fee-structure.pdf", pdfService.tableReport("Fee Structure", details,
-                java.util.List.of("Fee item", "Amount"), rows));
-    }
-
-    @PreAuthorize("hasRole('STUDENT')")
-    @GetMapping("/me/fee-structures/pdf")
-    public ResponseEntity<byte[]> downloadAllMyFeeStructures(@AuthenticationPrincipal User currentUser) {
-        var structures = studentProfileService.getAllMyFeeStructures(currentUser.getId());
-        var rows = new java.util.ArrayList<java.util.List<String>>();
-        for (var structure : structures) for (var item : structure.getItems())
-            rows.add(java.util.List.of(structure.getAcademicPeriodName(), item.getName(), "KES " + item.getAmount()));
-        var details = new java.util.LinkedHashMap<String, String>();
-        if (!structures.isEmpty()) details.put("Course", structures.getFirst().getCourseName());
-        details.put("Fee structures", String.valueOf(structures.size()));
-        return pdf("all-fee-structures.pdf", pdfService.tableReport("Programme Fee Structures", details,
-                java.util.List.of("Academic period", "Fee item", "Amount"), rows));
+        details.put("Academic period", structure.academicPeriodCode() + " — " + structure.academicPeriodName());
+        details.put("Intake", structure.intakeName());
+        details.put("Total", "KES " + structure.total());
+        var rows = structure.items().stream().map(item ->
+                java.util.List.of(item.code(), item.name(), "KES " + item.amount())).toList();
+        return pdf("my-fee-structure.pdf", pdfService.tableReport("Fee Schedule", details,
+                java.util.List.of("Code", "Fee item", "Amount"), rows));
     }
 
     @PreAuthorize("hasRole('STUDENT')")
@@ -97,7 +74,8 @@ public class StudentProfileController {
                 item.getDocumentNumber(), item.getDescription(), item.getDebit().toString(),
                 item.getCredit().toString(), item.getRunningBalance().toString())).toList();
         return pdf("my-fee-statement.pdf", pdfService.tableReport("Student Account Statement", details,
-                java.util.List.of("Posting Date", "Document No.", "Description", "Debit Amount", "Credit Amount", "Balance"), rows));
+                java.util.List.of("Date", "Document No.", "Description", "Debit", "Credit", "Balance"), rows,
+                new float[]{1.15f, 1.30f, 3.05f, 1.15f, 1.15f, 1.10f}));
     }
 
     private ResponseEntity<byte[]> pdf(String filename, byte[] body) {

@@ -26,7 +26,6 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getCourses(req));
     }
 
-
     @PostMapping
     public CourseResponse create(@Valid @RequestBody CreateCourseRequest req) {
         return courseService.create(req);

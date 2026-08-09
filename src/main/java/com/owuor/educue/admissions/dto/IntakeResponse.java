@@ -13,10 +13,12 @@ public record IntakeResponse(
         UUID uuid,
         String name,
         UUID academicYearUuid,
+        Long academicYearId,
         String academicYearCode,
         LocalDate startDate,
         LocalDate applicationDeadline,
         IntakeStatus status,
+        Long sequenceNumber,
         List<CourseSummary> courses
 ) {
     public static IntakeResponse from(Intake intake, List<IntakeCourse> intakeCourses) {
@@ -25,10 +27,12 @@ public record IntakeResponse(
                 intake.getUuid(),
                 intake.getName(),
                 intake.getAcademicYear().getUuid(),
+                intake.getAcademicYear().getId(),
                 intake.getAcademicYear().getCode(),
                 intake.getStartDate(),
                 intake.getApplicationDeadline(),
                 intake.getStatus(),
+                intake.getSequenceNumber(),
                 intakeCourses.stream()
                         .map(CourseSummary::from)
                         .toList()

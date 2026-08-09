@@ -61,4 +61,9 @@ public class UnitController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/{id}/close")
+    public ResponseEntity<UnitDto> close(@PathVariable Long id) {
+        return ResponseEntity.ok(unitService.close(id));
+    }
 }

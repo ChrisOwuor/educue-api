@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/trainer/results")
@@ -26,6 +27,15 @@ public class LecturerSubmitResultsController {
             @PathVariable Long courseUnitPlacementId
     ) {
         return lecturerMarksService.getResultSheet(courseUnitPlacementId);
+    }
+
+    @PreAuthorize("hasAuthority('view_student')")
+    @GetMapping("/grouped-unit/{unitUuid}")
+    public List<MarksEntryRowResponse> getGroupedResultSheet(
+            @PathVariable UUID unitUuid,
+            @AuthenticationPrincipal User user
+    ) {
+        return lecturerMarksService.getGroupedResultSheet(user.getId(), unitUuid);
     }
 
     @PostMapping

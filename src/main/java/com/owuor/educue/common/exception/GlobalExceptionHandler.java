@@ -3,12 +3,14 @@ package com.owuor.educue.common.exception;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.server.ResponseStatusException;
 
 
 import java.time.LocalDateTime;
@@ -61,6 +63,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest request) {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage(), request);
+    }
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse>
+    handleResponseStatusException(
+            ResponseStatusException exception,
+            HttpServletRequest request
+    ) {
+        HttpStatusCode status =
+                exception.getStatusCode();
+
+        ErrorResponse response =
+                new ErrorResponse(
+                        status.value(),
+                        exception.getReason() == null
+                                ? "Request failed."
+                                : exception.getReason(),
+                        LocalDateTime.now(),
+                        request.getRequestURI()
+                );
+
+        return ResponseEntity
+                .status(status)
+                .body(response);
     }
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status, String message, HttpServletRequest request) {

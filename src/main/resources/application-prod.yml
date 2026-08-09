@@ -1,0 +1,128 @@
+spring:
+  application:
+    name: ${APPLICATION_NAME}
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE}
+      minimum-idle: ${DB_POOL_MIN_IDLE}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+  jackson:
+    time-zone: ${APP_TIME_ZONE}
+  flyway:
+    enabled: true
+    locations: classpath:db/production
+    validate-migration-naming: true
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE}
+      max-request-size: ${MAX_REQUEST_SIZE}
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    from: ${MAIL_FROM}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS}
+      mail.smtp.connectiontimeout: ${SMTP_CONNECTION_TIMEOUT_MS}
+      mail.smtp.timeout: ${SMTP_TIMEOUT_MS}
+      mail.smtp.writetimeout: ${SMTP_WRITE_TIMEOUT_MS}
+
+server:
+  port: ${SERVER_PORT}
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY}
+  shutdown: graceful
+  address: 127.0.0.1
+
+spring.lifecycle.timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT}
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES}
+
+app:
+  time-zone: ${APP_TIME_ZONE}
+  frontend-base-url: ${FRONTEND_BASE_URL}
+  public-base-url: ${PUBLIC_BASE_URL}
+  default-avatar-url: ${DEFAULT_AVATAR_URL}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  auth:
+    cookie-secure: ${AUTH_COOKIE_SECURE}
+    password-reset:
+      expose-token: ${PASSWORD_RESET_EXPOSE_TOKEN}
+      mail-enabled: ${PASSWORD_RESET_MAIL_ENABLED}
+  bootstrap-admin:
+    email: ${BOOTSTRAP_ADMIN_EMAIL}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD}
+    full-name: ${BOOTSTRAP_ADMIN_FULL_NAME}
+  storage:
+    provider: ${APP_STORAGE_PROVIDER}
+    cloudinary:
+      cloud-name: ${CLOUDINARY_CLOUD_NAME}
+      api-key: ${CLOUDINARY_API_KEY}
+      api-secret: ${CLOUDINARY_API_SECRET}
+  admissions:
+    worker-delay-ms: ${ADMISSION_WORKER_DELAY_MS}
+    recovery-delay-ms: ${ADMISSION_RECOVERY_DELAY_MS}
+  finance:
+    receipt-prefix: ${FINANCE_RECEIPT_PREFIX}
+    attempt-fee-per-credit: ${ATTEMPT_FEE_PER_CREDIT}
+    debit-claim-worker-delay-ms: ${DEBIT_CLAIM_WORKER_DELAY_MS}
+  students:
+    bulk-worker-delay-ms: ${STUDENT_BULK_WORKER_DELAY_MS}
+    bulk-recovery-delay-ms: ${STUDENT_BULK_RECOVERY_DELAY_MS}
+    promotion-worker-delay-ms: ${STUDENT_PROMOTION_WORKER_DELAY_MS}
+    promotion-recovery-delay-ms: ${STUDENT_PROMOTION_RECOVERY_DELAY_MS}
+  mpesa:
+    worker-delay-ms: ${MPESA_WORKER_DELAY_MS}
+    recovery-delay-ms: ${MPESA_RECOVERY_DELAY_MS}
+    base-url: ${MPESA_BASE_URL}
+    c2b-register-path: ${MPESA_C2B_REGISTER_PATH}
+    consumer-key: ${MPESA_CONSUMER_KEY}
+    consumer-secret: ${MPESA_CONSUMER_SECRET}
+    c2b-short-code: ${MPESA_C2B_SHORT_CODE}
+    stk-short-code: ${MPESA_STK_SHORT_CODE}
+    stk-passkey: ${MPESA_STK_PASSKEY}
+    stk-callback-token: ${MPESA_STK_CALLBACK_TOKEN}
+    callback-token: ${MPESA_CALLBACK_TOKEN}
+    phone-hash-pepper: ${MPESA_PHONE_HASH_PEPPER}
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT}
+    com.owuor.educue: ${LOG_LEVEL_APP}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: ${HEALTH_SHOW_DETAILS}
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${APPLICATION_NAME}

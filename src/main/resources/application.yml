@@ -1,0 +1,138 @@
+spring:
+
+  application:
+    name: ${APPLICATION_NAME:educue}
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/educue}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:admin}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:30000}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+  jackson:
+    time-zone: ${APP_TIME_ZONE:Africa/Nairobi}
+  flyway:
+    enabled: true
+    locations: classpath:db/production
+    validate-migration-naming: true
+  servlet:
+    multipart:
+      max-file-size: ${MAX_FILE_SIZE:10MB}
+      max-request-size: ${MAX_REQUEST_SIZE:25MB}
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:owuorchrispine77@gmail.com}
+    password: ${SMTP_PASSWORD:qrdd jfjk bhxt qtva}
+    from: ${MAIL_FROM:owuorchrispine77@gmail.com}
+    properties:
+      mail.smtp.auth: ${SMTP_AUTH:true}
+      mail.smtp.starttls.enable: ${SMTP_STARTTLS:true}
+      mail.smtp.connectiontimeout: ${SMTP_CONNECTION_TIMEOUT_MS:5000}
+      mail.smtp.timeout: ${SMTP_TIMEOUT_MS:10000}
+      mail.smtp.writetimeout: ${SMTP_WRITE_TIMEOUT_MS:10000}
+
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: ${FORWARD_HEADERS_STRATEGY:none}
+  shutdown: graceful
+  address: 127.0.0.1
+
+spring.lifecycle.timeout-per-shutdown-phase: ${SHUTDOWN_TIMEOUT:30s}
+
+jwt:
+  # Development fallback only. JWT_SECRET is mandatory in production.
+  secret: ${JWT_SECRET:qi9GpHKvGbRjZ63SCHFNL1phkW5O0nw9zbbolvUdBlzBASzMKwREeHo1gWfVIdblmyTrUaJEZLS2aIq7JebNqw==}
+  expiration-minutes: ${JWT_EXPIRATION_MINUTES:600}
+
+app:
+  time-zone: ${APP_TIME_ZONE:Africa/Nairobi}
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:5173}
+  public-base-url: ${PUBLIC_BASE_URL:http://localhost:5173}
+  default-avatar-url: ${DEFAULT_AVATAR_URL:https://ui-avatars.com/api/?background=e8eef7&color=17365d&name=User}
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  auth:
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
+    password-reset:
+      expose-token: ${EXPOSE_PASSWORD_RESET_TOKEN:false}
+      mail-enabled: ${PASSWORD_RESET_MAIL_ENABLED:true}
+  bootstrap-admin:
+    email: ${BOOTSTRAP_ADMIN_EMAIL:admin@educue.local}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:admin}
+    full-name: ${BOOTSTRAP_ADMIN_FULL_NAME:System Administrator}
+  storage:
+    # Use "s3" later after configuring AWS credentials, bucket and region.
+    # Use "cloudinary" only when documents are intentionally hosted there.
+    provider: ${FILE_STORAGE_PROVIDER:cloudinary}
+    local:
+      root: ${LOCAL_FILE_STORAGE_ROOT:./storage/documents}
+    s3:
+      bucket: ${S3_BUCKET:educore-private-documents}
+      region: ${S3_REGION:af-south-1}
+    cloudinary:
+      cloud-name: ${CLOUDINARY_CLOUD_NAME:dhbcsq9er}
+      api-key: ${CLOUDINARY_API_KEY:578615573993311}
+      api-secret: ${CLOUDINARY_API_SECRET:K7_m025CmmMySrJ1-cDjHUZKBUs}
+  admissions:
+    worker-delay-ms: ${ADMISSION_WORKER_DELAY_MS:2000}
+    recovery-delay-ms: ${ADMISSION_RECOVERY_DELAY_MS:60000}
+  students:
+    bulk-worker-delay-ms: ${BULK_ONBOARDING_WORKER_DELAY_MS:2000}
+    bulk-recovery-delay-ms: ${BULK_ONBOARDING_RECOVERY_DELAY_MS:60000}
+    promotion-worker-delay-ms: ${PROMOTION_WORKER_DELAY_MS:2000}
+    promotion-recovery-delay-ms: ${PROMOTION_RECOVERY_DELAY_MS:60000}
+  finance:
+    receipt-prefix: ${FINANCE_RECEIPT_PREFIX:MB02}
+    attempt-fee-per-credit: ${ATTEMPT_FEE_PER_CREDIT:1000}
+    debit-claim-worker-delay-ms: ${DEBIT_CLAIM_WORKER_DELAY_MS:3000}
+  mpesa:
+    worker-delay-ms: ${MPESA_WORKER_DELAY_MS:500}
+    recovery-delay-ms: ${MPESA_RECOVERY_DELAY_MS:60000}
+    base-url: ${MPESA_BASE_URL:https://sandbox.safaricom.co.ke}
+    c2b-register-path: ${MPESA_C2B_REGISTER_PATH:/mpesa/c2b/v2/registerurl}
+    consumer-key: ${MPESA_CONSUMER_KEY:POvYLnPuUjZDnQw62cfCKveGwh5a8goITy42uhbegkPd1Ew1}
+    consumer-secret: ${MPESA_CONSUMER_SECRET:S7zVSTO81fd5n3zkozaJzwAahCzrE2gFA8QaBxAVO2u0nK0PtTv54Am0ObtWmcC4}
+    c2b-short-code: ${MPESA_C2B_SHORT_CODE:600584}
+    stk-short-code: ${MPESA_STK_SHORT_CODE:174379}
+    stk-passkey: ${MPESA_STK_PASSKEY:bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919}
+    stk-callback-token: ${MPESA_STK_CALLBACK_TOKEN:c56aa6fe921148f78d2b18646e35650e2acd0c1d6f0945b0981b2e3b4bb682ce}
+    callback-token: ${MPESA_CALLBACK_TOKEN:1f46cf389b4d4afd990fd00d4a237b0bc34f0b73cf31447db61755bf311bf7fb}
+    phone-hash-pepper: ${MPESA_PHONE_HASH_PEPPER:ea812677f9e64500aaac73661238c55d14b83a73fbcc4ba7aa10f8777676c4f6}
+
+logging:
+  level:
+    root: ${LOG_LEVEL_ROOT:INFO}
+    com.owuor.educue: ${LOG_LEVEL_APP:INFO}
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:WARN}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: ${HEALTH_SHOW_DETAILS:when_authorized}
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${APPLICATION_NAME:educue}

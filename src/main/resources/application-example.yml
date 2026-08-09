@@ -17,7 +17,7 @@ spring:
 
   flyway:
     enabled: true
-    locations: classpath:db/migration
+    locations: classpath:db/production
 
   servlet:
     multipart:
@@ -33,7 +33,7 @@ jwt:
 
 app:
   cors:
-    allowed-origins: http://localhost:5173
+    allowed-origins: http://localhost:3000,http://localhost:5173
 
   bootstrap-admin:
     email: admin@example.com
@@ -45,9 +45,11 @@ app:
 
   mpesa:
     base-url: https://sandbox.safaricom.co.ke
+    c2b-register-path: /mpesa/c2b/v1/registerurl
     consumer-key: replace_with_daraja_consumer_key
     consumer-secret: replace_with_daraja_consumer_secret
-    short-code: 600000
+    c2b-short-code: 600000
+    stk-short-code: 174379
     stk-passkey: replace_with_lipa_na_mpesa_passkey
     stk-callback-token: replace_with_a_long_random_stk_callback_token
     callback-token: replace_with_a_long_random_callback_token

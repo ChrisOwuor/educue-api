@@ -1,6 +1,8 @@
 package com.owuor.educue.admissions.controllers;
 
 import com.owuor.educue.admissions.dto.CreateIntakeRequest;
+import com.owuor.educue.admissions.dto.ConfirmationRequest;
+import com.owuor.educue.admissions.dto.IntakeDetailResponse;
 import com.owuor.educue.admissions.dto.IntakeResponse;
 import com.owuor.educue.admissions.service.IntakeService;
 import jakarta.validation.Valid;
@@ -23,7 +25,7 @@ public class IntakeController {
         return intakeService.create(request);
     }
 
-    @PreAuthorize("hasAuthority('manage_intakes')")
+    @PreAuthorize("hasAnyAuthority('manage_intakes', 'manage_courses') or hasAnyRole('ADMIN', 'FINANCE')")
     @GetMapping
     public List<IntakeResponse> getAll() {
         return intakeService.getAll();
@@ -33,6 +35,12 @@ public class IntakeController {
     @GetMapping("/{id}")
     public IntakeResponse getById(@PathVariable Long id) {
         return intakeService.getById(id);
+    }
+
+    @PreAuthorize("hasAnyAuthority('manage_intakes', 'manage_courses') or hasAnyRole('ADMIN', 'FINANCE')")
+    @GetMapping("/{id}/detail")
+    public IntakeDetailResponse getDetail(@PathVariable Long id) {
+        return intakeService.getDetail(id);
     }
 
     // PUBLIC - no auth required. This is what the unauthenticated /apply
@@ -50,9 +58,35 @@ public class IntakeController {
         intakeService.addCourseToIntake(id, courseId);
     }
 
+    @PreAuthorize("hasAuthority('manage_courses')")
+    @PutMapping("/{id}/courses/{courseId}/academic-confirmation")
+    public IntakeDetailResponse confirmAcademic(@PathVariable Long id, @PathVariable Long courseId,
+            @Valid @RequestBody ConfirmationRequest request) {
+        return intakeService.confirmAcademic(id, courseId, request.confirmed());
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'FINANCE')")
+    @PutMapping("/{id}/courses/{courseId}/fee-confirmation")
+    public IntakeDetailResponse confirmFees(@PathVariable Long id, @PathVariable Long courseId,
+            @Valid @RequestBody ConfirmationRequest request) {
+        return intakeService.confirmFees(id, courseId, request.confirmed());
+    }
+
+    @PreAuthorize("hasAuthority('manage_intakes')")
+    @PutMapping("/{id}/publish")
+    public IntakeDetailResponse publish(@PathVariable Long id) {
+        return intakeService.publish(id);
+    }
+
     @PreAuthorize("hasAuthority('manage_intakes')")
     @DeleteMapping("/{id}/courses/{courseId}")
     public void removeCourse(@PathVariable Long id, @PathVariable Long courseId) {
         intakeService.removeCourseFromIntake(id, courseId);
+    }
+
+    @PreAuthorize("hasAuthority('manage_intakes')")
+    @PutMapping("/{id}/close")
+    public IntakeResponse close(@PathVariable Long id) {
+        return intakeService.close(id);
     }
 }

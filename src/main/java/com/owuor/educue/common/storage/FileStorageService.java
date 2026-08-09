@@ -7,6 +7,8 @@ public interface FileStorageService {
 
     String store(MultipartFile file, String folder);
 
+    String store(byte[] content, String filename, String contentType, String folder);
+
     String getAccessUrl(String key);
 
     Resource load(String key);

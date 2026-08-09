@@ -18,6 +18,7 @@ public interface AcademicPeriodRepository extends
             Integer yearNumber,
             Integer periodNumber
     );
+    java.util.List<AcademicPeriod> findByPeriodTypeOrderBySequenceNumber(AcademicPeriodType periodType);
     boolean existsByCodeIgnoreCase(String code);
     boolean existsByCodeIgnoreCaseAndUuidNot(String code, UUID uuid);
 }

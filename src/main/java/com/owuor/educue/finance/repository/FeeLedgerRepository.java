@@ -18,19 +18,18 @@ public interface FeeLedgerRepository extends JpaRepository<FeeLedger, Long> {
     Long nextReceiptSequence();
 
     boolean existsByReversalOfId(Long ledgerId);
+    boolean existsByExternalReference(String externalReference);
 
-    // Finds the most recent ledger row for a student to get their current running balance.
     Optional<FeeLedger> findTopByStudentIdOrderByIdDesc(Long studentId);
+    Optional<FeeLedger> findByPaymentId(Long paymentId);
 
-    // Finds all ledger rows for a student, ordered chronologically.
     List<FeeLedger> findAllByStudentIdOrderByIdAsc(Long studentId);
 
     List<FeeLedger> findAllByStudentIdOrderByPostingDateAscCreatedAtAscIdAsc(Long studentId);
 
-    // Checks if a student has already been billed for a specific fee structure.
-    boolean existsByStudentIdAndFeeStructureId(Long studentId, Long feeStructureId);
-
-
+    @Query("SELECT COUNT(fl) > 0 FROM FeeLedger fl WHERE fl.student.id = :studentId AND fl.courseAcademicPeriod.id = :courseAcademicPeriodId AND fl.transactionType = 'TUITION_BILL'")
+    boolean existsTuitionBillForPeriod(@Param("studentId") Long studentId, @Param("courseAcademicPeriodId") Long courseAcademicPeriodId);
+    
     @Query("""
             SELECT COALESCE(SUM(fl.debit - fl.credit), 0)
             FROM FeeLedger fl

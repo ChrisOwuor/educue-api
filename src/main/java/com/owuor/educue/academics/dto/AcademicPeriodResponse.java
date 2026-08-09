@@ -8,12 +8,14 @@ import java.util.UUID;
 
 /** Public API representation of an academic period. */
 public record AcademicPeriodResponse(
+        Long id,
         UUID uuid,
         String code,
         String name,
         AcademicPeriodType periodType,
         Integer yearNumber,
         Integer periodNumber,
+        Integer periodsPerYear,
         Integer sequenceNumber,
         boolean active,
         Long version,
@@ -22,8 +24,8 @@ public record AcademicPeriodResponse(
 ) {
     public static AcademicPeriodResponse from(AcademicPeriod period) {
         return new AcademicPeriodResponse(
-                period.getUuid(), period.getCode(), period.getName(), period.getPeriodType(),
-                period.getYearNumber(), period.getPeriodNumber(), period.getSequenceNumber(),
+                period.getId(),period.getUuid(), period.getCode(), period.getName(), period.getPeriodType(),
+                period.getYearNumber(), period.getPeriodNumber(), period.getPeriodsPerYear(), period.getSequenceNumber(),
                 period.isActive(), period.getVersion(), period.getCreatedAt(), period.getUpdatedAt()
         );
     }

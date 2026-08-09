@@ -7,16 +7,18 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
@@ -41,34 +43,43 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                // CSRF is disabled because we don't use session cookies for
-                // state - JWT is the auth mechanism. If this changes later,
-                // revisit (HttpOnly cookies + no CSRF protection is the one
-                // combination worth being careful about).
-                .csrf(AbstractHttpConfigurer::disable)
+                .csrf(csrf -> {
+                    CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+                    repository.setCookiePath("/");
+                    CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
+                    handler.setCsrfRequestAttributeName(null);
+                    csrf.csrfTokenRepository(repository).csrfTokenRequestHandler(handler)
+                            .ignoringRequestMatchers("/api/gateway/v1/transaction/**", "/api/gateway/v2/transaction/**");
+                })
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/login",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
                                 "/api/applications",
                                 "/api/applications/*/documents"
                         ).permitAll()
 
                         .requestMatchers(HttpMethod.GET,
+                                "/api/auth/csrf",
                                 "/api/intakes/open",
+                                "/api/public/applications/status",
                                 "/api/public/exam-cards/*"
                         ).permitAll()
 
-                        .requestMatchers("/api/payments/mpesa/callback/**")
-                        .permitAll()
-                        .requestMatchers("/api/payments/mpesa/stk/**")
+                        .requestMatchers("/api/gateway/v1/transaction/**", "/api/gateway/v2/transaction/**")
                         .permitAll()
 
                         // Actuator endpoints for Prometheus
-                        .requestMatchers("/actuator/health", "/actuator/prometheus")
-                        .permitAll()
+                        .requestMatchers(
+                                "/actuator/health",
+                                "/actuator/metrics",
+                                "/actuator/info",
+                                "/actuator/prometheus"
+                        ).permitAll()
 
                         .anyRequest().authenticated()
                 )
@@ -80,7 +91,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(allowedOrigins.split(",")));
+        config.setAllowedOrigins(Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         // Required for the HttpOnly cookie to be sent/received cross-origin

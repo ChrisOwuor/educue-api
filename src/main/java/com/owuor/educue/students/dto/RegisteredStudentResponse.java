@@ -21,5 +21,7 @@ public class RegisteredStudentResponse {
 
     private String status;
 
+    private String registrationOrigin;
+
     private LocalDateTime registeredAt;
 }

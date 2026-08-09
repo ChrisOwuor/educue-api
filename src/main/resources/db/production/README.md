@@ -1,27 +1,34 @@
-# EduCue production baseline
+# EduCue database migrations
 
-This directory is the squashed Flyway history for a brand-new production database.
-It represents the final schema after historical migrations V1–V40.
+Flyway owns the PostgreSQL schema and Hibernate validates it with
+`ddl-auto: validate`. These migrations target a fresh database and represent
+the application's current entity model.
 
-Run the application with the `production` Spring profile. That profile points Flyway
-to `classpath:db/production`; it must never be combined with `classpath:db/migration`.
+The six migrations are applied in this order:
 
-Migration order:
+1. `V1__foundation_and_security.sql`
+2. `V2__academics_and_admissions.sql`
+3. `V3__finance_and_enrollment.sql`
+4. `V4__student_completion.sql`
+5. `V5__seed_reference_data.sql`
+6. `V6__seed_institution_and_staff.sql`
 
-1. Institution and academic-year foundations
-2. Identity, roles, permissions, and users
-3. Academic courses, periods, units, placements, and lecturer assignments
-4. Admissions and intakes
-5. Students, enrollments, unit registrations, and exam cards
-6. Results
-7. Finance, ledger, PayBill, and STK Push
-8. Cross-category constraints and indexes
-9. Roles and permission reference data
+V5 seeds roles, permissions, their mappings, and the initial unit catalogue.
+V6 seeds the school profile, Administration, Registrar, Finance, and Human
+Health departments, academic years beginning in September from 2020/2021
+through 2026/2027, and the initial staff accounts.
 
-The baseline contains no institution, department, course, unit, student, payment,
-or staff-user demonstration data. The first administrator is created at startup from
-the required `BOOTSTRAP_ADMIN_*` environment variables and receives a BCrypt hash.
+Seeded staff emails:
 
-Do not use this baseline against a database that already has the historical Flyway
-history. Existing installations must continue using `db/migration`. Never edit these
-files after the first production deployment; add new migrations starting at V10.
+- `admin@educue.local`
+- `registrar@educue.local`
+- `finance@educue.local`
+- `hod@educue.local`
+- `trainer@educue.local`
+
+Every seeded account starts with `ChangeMe@123` and must change it after the
+first login.
+
+These files replace the previous development history and are intended for a
+new database. Never edit one after it has been applied; add a new incremented
+migration for subsequent changes.

@@ -10,8 +10,10 @@ import java.util.UUID;
 /** Persistence operations and common lookups for academic years. */
 public interface AcademicYearRepository extends JpaRepository<AcademicYear, Long> {
     Optional<AcademicYear> findByUuid(UUID uuid);
+    Optional<AcademicYear> findByStartYear(Integer startYear);
     Optional<AcademicYear> findByCurrentTrue();
     boolean existsByCodeIgnoreCase(String code);
     boolean existsByCodeIgnoreCaseAndUuidNot(String code, UUID uuid);
     List<AcademicYear> findAllByOrderByStartDateDesc();
+
 }
