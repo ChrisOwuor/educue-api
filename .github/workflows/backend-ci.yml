@@ -221,7 +221,7 @@ jobs:
 
     environment:
       name: production
-      url: https://portal.educue.ebadynamics.co.ke
+      url: https://portal.ebadynamics.co.ke
 
     concurrency:
       group: educue-backend-production
@@ -473,5 +473,5 @@ jobs:
             echo
             echo "**Environment:** production"
             echo
-            echo "**Application:** https://portal.educue.ebadynamics.co.ke"
+            echo "**Application:** https://portal.ebadynamics.co.ke"
           } >> "$GITHUB_STEP_SUMMARY"
