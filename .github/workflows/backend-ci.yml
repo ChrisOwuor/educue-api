@@ -26,6 +26,31 @@ jobs:
     name: Test and Build
     runs-on: ubuntu-latest
 
+    # Spring's integration tests start the full application context. Flyway
+    # therefore needs a real PostgreSQL database before Hibernate can start.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: educue_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: admin
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d educue_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/educue_test
+      DB_USERNAME: postgres
+      DB_PASSWORD: admin
+      APP_TIME_ZONE: Africa/Nairobi
+      JWT_SECRET: ci-only-educue-jwt-secret-with-more-than-sixty-four-characters-123456789
+      PASSWORD_RESET_MAIL_ENABLED: "false"
+
     steps:
 
       # -------------------------------------------------------
@@ -191,7 +216,7 @@ jobs:
 
     environment:
       name: production
-      url: https://portal.ebadynamics.co.ke
+      url: https://portal.educue.ebadynamics.co.ke
 
     concurrency:
       group: educue-backend-production
@@ -443,5 +468,5 @@ jobs:
             echo
             echo "**Environment:** production"
             echo
-            echo "**Application:** https://portal.ebadynamics.co.ke"
+            echo "**Application:** https://portal.educue.ebadynamics.co.ke"
           } >> "$GITHUB_STEP_SUMMARY"
