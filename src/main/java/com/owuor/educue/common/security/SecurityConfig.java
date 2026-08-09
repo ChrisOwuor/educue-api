@@ -76,6 +76,7 @@ public class SecurityConfig {
                         // Actuator endpoints for Prometheus
                         .requestMatchers(
                                 "/actuator/health",
+                                "/actuator/health/**",
                                 "/actuator/metrics",
                                 "/actuator/info",
                                 "/actuator/prometheus"
