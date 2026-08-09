@@ -20,6 +20,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.owuor.educue.users.entity.User;
 
 import java.util.List;
+import java.util.UUID;
+import com.owuor.educue.students.dto.HodUnitRegistrationDtos.*;
 
 @RestController
 @RequestMapping("/api/unit-registrations")
@@ -28,6 +30,31 @@ public class StudentUnitRegistrationController {
 
     private final StudentUnitRegistrationService registrationService;
     private final RegistrationPdfService registrationPdfService;
+
+    @PreAuthorize("hasRole('HOD')")
+    @GetMapping("/hod/intakes")
+    public List<IntakeOption> hodIntakes(@AuthenticationPrincipal User requester) {
+        return registrationService.hodIntakes(requester);
+    }
+
+    @PreAuthorize("hasRole('HOD')")
+    @GetMapping("/hod/enrollments")
+    public List<EnrollmentOption> hodEnrollments(@AuthenticationPrincipal User requester, @RequestParam UUID intakeUuid,
+                                                  @RequestParam(required = false) String search) {
+        return registrationService.hodEnrollments(requester, intakeUuid, search);
+    }
+
+    @PreAuthorize("hasRole('HOD')")
+    @PostMapping("/hod/available-units")
+    public List<UnitOption> hodAvailableUnits(@AuthenticationPrincipal User requester, @RequestBody SelectionRequest request) {
+        return registrationService.hodAvailableUnits(requester, request);
+    }
+
+    @PreAuthorize("hasRole('HOD')")
+    @PostMapping("/hod/register")
+    public RegisterResponse hodRegister(@AuthenticationPrincipal User requester, @RequestBody RegisterRequest request) {
+        return registrationService.hodRegister(requester, request);
+    }
 
     @PreAuthorize("hasAnyRole('TRAINER','HOD','ADMIN')")
     @GetMapping("/course-unit-placement/{courseUnitPlacementId}")

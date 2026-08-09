@@ -8,14 +8,26 @@ public record UserResponse(
         Long id,
         String fullName,
         String email,
-        String role
+        String phone,
+        String username,
+        String role,
+        Long departmentId,
+        String departmentName,
+        boolean active,
+        boolean mustChangePassword
 ) {
     public static UserResponse from(User user) {
         return new UserResponse(
                 user.getId(),
                 user.getFullName(),
                 user.getEmail(),
-                user.getRole().getName()
+                user.getPhone(),
+                user.getUsername(),
+                user.getRole().getName(),
+                user.getDepartment() == null ? null : user.getDepartment().getId(),
+                user.getDepartment() == null ? null : user.getDepartment().getName(),
+                user.isActive(),
+                user.isMustChangePassword()
         );
     }
 }

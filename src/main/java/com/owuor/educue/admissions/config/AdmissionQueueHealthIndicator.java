@@ -1,0 +1,3 @@
+package com.owuor.educue.admissions.config;
+import com.owuor.educue.admissions.repository.AdmissionJobRepository;import lombok.RequiredArgsConstructor;import org.springframework.boot.health.contributor.*;import org.springframework.stereotype.Component;
+@Component("admissionQueue") @RequiredArgsConstructor public class AdmissionQueueHealthIndicator implements HealthIndicator{private final AdmissionJobRepository repository;@Override public Health health(){long pending=repository.countByStatus("PENDING")+repository.countByStatus("RETRY"),processing=repository.countByStatus("PROCESSING"),dead=repository.countByStatus("DEAD_LETTER");return Health.up().withDetail("pending",pending).withDetail("processing",processing).withDetail("deadLetter",dead).build();}}

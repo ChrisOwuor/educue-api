@@ -13,6 +13,8 @@ public class StudentPromotionRowResponse {
 
     private String admissionNumber;
 
+    private String courseName;
+
     private String academicPeriod;
 
     private int coreUnits;

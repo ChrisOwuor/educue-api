@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface IntakeRepository extends JpaRepository<Intake, Long> {
     boolean existsByName(String name);
+    boolean existsByNameIgnoreCase(String name);
 
     // "Open" here means within the application window, not just a status
     // flag - this is what the public apply page actually needs: intakes
@@ -17,4 +18,5 @@ public interface IntakeRepository extends JpaRepository<Intake, Long> {
     List<Intake> findByApplicationDeadlineGreaterThanEqual(LocalDate today);
 
     Optional<Intake> findByName(String name);
+
 }

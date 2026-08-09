@@ -58,6 +58,10 @@ public class CourseAcademicPeriod {
     @JoinColumn(name = "next_period_id", unique = true)
     private CourseAcademicPeriod nextPeriod;
 
+    /** Explicitly marks the intentional end of this course's progression chain. */
+    @Column(name = "final_period", nullable = false, columnDefinition = "boolean default false")
+    private boolean finalPeriod;
+
     @Version
     @Column(nullable = false)
     private Long version;

@@ -17,6 +17,10 @@ class DashboardServiceIntegrationTest {
         var admin = dashboardService.admin();
 
         assertThat(finance.monthlyCashFlow()).hasSize(12);
+        assertThat(finance.monthlyCollections()).hasSize(12);
+        assertThat(finance.yearlyCollections()).hasSize(7);
+        assertThat(finance.chargePosition()).hasSize(2);
+        assertThat(dashboardService.finance(2024, 2026, 6).monthlyCollections()).hasSize(6);
         assertThat(finance.collectedThisMonth()).isNotNull();
         assertThat(admin.monthlyGrowth()).hasSize(12);
         assertThat(admin.totalStudents()).isGreaterThanOrEqualTo(0);

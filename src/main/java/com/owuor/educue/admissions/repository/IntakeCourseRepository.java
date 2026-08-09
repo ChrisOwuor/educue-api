@@ -11,4 +11,5 @@ public interface IntakeCourseRepository extends JpaRepository<IntakeCourse, Long
 
     boolean existsByIntakeIdAndCourseId(Long intakeId, Long courseId);
     Optional<IntakeCourse> findByIntakeIdAndCourseId(Long intakeId, Long courseId);
-}
+
+    boolean existsByIntake_IdAndCourse_Id(Long intakeId, Long courseId);}

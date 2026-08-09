@@ -42,7 +42,7 @@ public record CourseUnitPlacementResponse(
                 placement.getUnit().getCreditHours(),
                 period.getUuid(), period.getCode(), period.getName(), period.getPeriodType(),
                 coursePeriod.getPosition(), placement.getUnitType(),
-                placement.getEffectiveFromIntakeYear(), placement.getEffectiveToIntakeYear(),
+                placement.getEffectiveFromIntake().getSequenceNumber().intValue(), placement.getEffectiveToIntake().getSequenceNumber().intValue(),
                 placement.isActive(), placement.getVersion(), placement.getCreatedAt(), placement.getUpdatedAt()
         );
     }

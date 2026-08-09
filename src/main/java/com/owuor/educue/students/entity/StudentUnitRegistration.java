@@ -2,6 +2,7 @@ package com.owuor.educue.students.entity;
 
 import com.owuor.educue.academics.entity.CourseUnitPlacement;
 import com.owuor.educue.academics.enums.AttemptType;
+import com.owuor.educue.academics.enums.RegistrationOrigin;
 import com.owuor.educue.academics.enums.RegistrationStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -43,6 +44,10 @@ public class StudentUnitRegistration {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private RegistrationStatus status = RegistrationStatus.ACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "registration_origin", nullable = false, length = 20)
+    private RegistrationOrigin registrationOrigin = RegistrationOrigin.CURRENT;
 
     @Column(name = "registered_at", nullable = false, updatable = false)
     private LocalDateTime registeredAt = LocalDateTime.now();

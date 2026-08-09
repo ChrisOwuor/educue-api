@@ -23,62 +23,89 @@ import com.owuor.educue.students.service.ExamCardService;
 @RequiredArgsConstructor
 public class StudentUnitController {
 
-    private final StudentUnitService studentUnitService;
-    private final StudentUnitRegistrationService studentUnitRegistrationService;
-    private final ProfessionalPdfService pdfService;
-    private final ExamCardService examCardService;
+        private final StudentUnitService studentUnitService;
+        private final StudentUnitRegistrationService studentUnitRegistrationService;
+        private final ProfessionalPdfService pdfService;
+        private final ExamCardService examCardService;
 
-    @PreAuthorize("hasRole('STUDENT')")
-    @GetMapping("/me/units")
-    public List<StudentUnitResponse> getMyCurrentPeriodUnits(
-            @AuthenticationPrincipal User currentUser
-    ) {
+        @PreAuthorize("hasRole('STUDENT')")
+        @GetMapping("/me/units")
+        public List<StudentUnitResponse> getMyCurrentPeriodUnits(
+                        @AuthenticationPrincipal User currentUser) {
 
-        return studentUnitService.getCurrentPeriodUnits(
-                currentUser.getId()
-        );
-    }
+                return studentUnitService.getCurrentPeriodUnits(
+                                currentUser.getId());
+        }
 
-    @PreAuthorize("hasRole('STUDENT')")
-    @PostMapping("/me/unit-registrations")
-    public ResponseEntity<RegistrationResponse> registerUnits(
-            @AuthenticationPrincipal User currentUser,
-            @RequestBody RegisterUnitsRequest request
-    ) {
-        RegistrationResponse registrationResponse=  studentUnitRegistrationService.registerUnits(
-                currentUser.getId(),
-                request.getCourseUnitPlacementIds()
-        );
-        return ResponseEntity.ok(registrationResponse);
-    }
+        @PreAuthorize("hasRole('STUDENT')")
+        @PostMapping("/me/unit-registrations")
+        public ResponseEntity<RegistrationResponse> registerUnits(
+                        @AuthenticationPrincipal User currentUser,
+                        @RequestBody RegisterUnitsRequest request) {
+                RegistrationResponse registrationResponse = studentUnitRegistrationService.registerUnits(
+                                currentUser.getId(),
+                                request.getCourseUnitPlacementIds());
+                return ResponseEntity.ok(registrationResponse);
+        }
 
-    @PreAuthorize("hasRole('STUDENT')")
-    @GetMapping("/me/registered-units")
-    public List<StudentUnitResponse> getRegisteredUnits(
-            @AuthenticationPrincipal User currentUser
-    ) {
-        return studentUnitRegistrationService.getRegisteredUnits(currentUser.getId());
-    }
+        @PreAuthorize("hasRole('STUDENT')")
+        @PostMapping("/me/legacy-unit-registrations")
+        public ResponseEntity<RegistrationResponse> registerLegacyUnits(
+                @AuthenticationPrincipal User currentUser,
+                @RequestBody RegisterUnitsRequest request) {
+                RegistrationResponse registrationResponse = studentUnitRegistrationService.registerLegacyUnits(
+                        currentUser.getId(),
+                        request.getCourseUnitPlacementIds());
+                return ResponseEntity.ok(registrationResponse);
+        }
 
-    @PreAuthorize("hasRole('STUDENT')")
-    @GetMapping("/me/units/pdf")
-    public ResponseEntity<byte[]> downloadMyCurrentUnits(@AuthenticationPrincipal User currentUser) {
-        var units = studentUnitService.getCurrentPeriodUnits(currentUser.getId());
-        var rows = units.stream().map(unit -> java.util.List.of(unit.unitCode(), unit.unitName(),
-                unit.academicPeriodName(), String.valueOf(unit.creditHours()))).toList();
-        byte[] body = pdfService.tableReport("Current Academic Period Units", new java.util.LinkedHashMap<>(),
-                java.util.List.of("Code", "Unit", "Academic period", "Credits"), rows);
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=my-current-units.pdf")
-                .contentType(MediaType.APPLICATION_PDF).body(body);
-    }
+        @PreAuthorize("hasRole('STUDENT')")
+        @GetMapping("/me/registered-units")
+        public List<StudentUnitResponse> getRegisteredUnits(
+                        @AuthenticationPrincipal User currentUser) {
+                return studentUnitRegistrationService.getRegisteredUnits(currentUser.getId());
+        }
 
-    @PreAuthorize("hasRole('STUDENT')")
-    @GetMapping("/me/exam-card/pdf")
-    public ResponseEntity<byte[]> downloadExamCard(@AuthenticationPrincipal User currentUser) {
-        byte[] body = examCardService.generateForStudent(currentUser.getId());
-        return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=my-exam-card.pdf")
-                .contentType(MediaType.APPLICATION_PDF).body(body);
-    }
+        @PreAuthorize("hasRole('STUDENT')")
+        @GetMapping("/me/legacy-registrations")
+        public List<StudentUnitResponse> getLegacyRegistrations(
+                        @AuthenticationPrincipal User currentUser) {
+                return studentUnitRegistrationService.getLegacyRegistrations(currentUser.getId());
+        }
 
+        @PreAuthorize("hasRole('STUDENT')")
+        @GetMapping("/me/units/history")
+        public List<StudentUnitResponse> getMyUnitsUpToCurrentPeriod(
+                @AuthenticationPrincipal User currentUser
+        ) {
+                return studentUnitService.getUnitsUpToCurrentPeriod(
+                        currentUser.getId()
+                );
+        }
+
+        @PreAuthorize("hasRole('STUDENT')")
+        @GetMapping("/me/units/pdf")
+        public ResponseEntity<byte[]> downloadMyCurrentUnits(@AuthenticationPrincipal User currentUser) {
+                var units = studentUnitService.getCurrentPeriodUnits(currentUser.getId());
+                var rows = units.stream().map(unit -> java.util.List.of(unit.unitCode(), unit.unitName(),
+                                unit.academicPeriodName(), String.valueOf(unit.creditHours()))).toList();
+                byte[] body = pdfService.tableReport("Current Academic Period Units", new java.util.LinkedHashMap<>(),
+                                java.util.List.of("Code", "Unit", "Academic period", "Credits"), rows);
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=my-current-units.pdf")
+                                .contentType(MediaType.APPLICATION_PDF).body(body);
+        }
+
+        @PreAuthorize("hasRole('STUDENT')")
+        @GetMapping("/me/exam-card/pdf")
+        public ResponseEntity<byte[]> downloadExamCard(@AuthenticationPrincipal User currentUser,
+                        @RequestParam(required = false) com.owuor.educue.academics.enums.AttemptType attemptType,
+                        @RequestParam(required = false) java.util.UUID courseAcademicPeriodUuid) {
+                byte[] body = examCardService.generateForStudent(currentUser.getId(), attemptType,
+                                courseAcademicPeriodUuid);
+                return ResponseEntity.ok()
+                                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=my-exam-card.pdf")
+                                .contentType(MediaType.APPLICATION_PDF).body(body);
+        }
 
 }

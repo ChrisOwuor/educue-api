@@ -21,6 +21,10 @@ public record MarksEntryRowResponse(
 
         String unitName,
 
+        Long courseId,
+        String courseCode,
+        String courseName,
+
         String attemptType,
 
         Long resultId,

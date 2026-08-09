@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.*;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +20,7 @@ public class UnitService {
     private final UnitRepository unitRepository;
     private final DepartmentRepository departmentRepository;
 
+    @Transactional(readOnly = true)
     public ApiPageResponse<UnitDto> getAll(UnitFilterRequest request) {
 
         Sort sort = Sort.by("name").ascending();
@@ -105,6 +107,7 @@ public class UnitService {
         return spec;
     }
 
+    @Transactional(readOnly = true)
     public UnitDto getById(Long id) {
 
         Unit unit = unitRepository.findById(id)
@@ -116,6 +119,7 @@ public class UnitService {
         return toDto(unit);
     }
 
+    @Transactional
     public UnitDto create(CreateUnitRequest request) {
 
         Department department =
@@ -140,6 +144,7 @@ public class UnitService {
         return toDto(unitRepository.save(unit));
     }
 
+    @Transactional
     public UnitDto update(
             Long id,
             UpdateUnitRequest request
@@ -183,6 +188,15 @@ public class UnitService {
         return toDto(unitRepository.save(unit));
     }
 
+    @Transactional
+    public UnitDto close(Long id) {
+        Unit unit = unitRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Unit not found"));
+        unit.setActive(false);
+        return toDto(unitRepository.save(unit));
+    }
+
+    @Transactional
     public void delete(Long id) {
 
         Unit unit = unitRepository.findById(id)

@@ -15,11 +15,17 @@ public record StudentResultResponse(
         String unitName,
         String course,
         String academicPeriod,
+        Long courseAcademicPeriodId,
         String attemptType,
+        boolean activeFurtherAttempt,
         BigDecimal caMarks,
         BigDecimal examMarks,
         BigDecimal totalMarks,
         String grade,
+        String academicPeriodCode,
+        Integer academicYearNumber,
+        Integer creditHours,
+        BigDecimal weightedMarks,
         boolean passed,
         String status,
         String remarks,
@@ -28,4 +34,5 @@ public record StudentResultResponse(
         LocalDateTime approvedAt,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
-) {}
+) {
+}

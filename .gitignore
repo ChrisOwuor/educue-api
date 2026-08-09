@@ -33,3 +33,9 @@ build/
 .vscode/
 
 application.yml
+!src/main/resources/application.yml
+
+# Local environment files may contain production credentials.
+.env
+.env.*
+!.env.example

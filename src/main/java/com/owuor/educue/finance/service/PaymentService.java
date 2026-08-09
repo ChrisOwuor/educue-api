@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 import java.time.LocalDateTime;
+import com.owuor.educue.finance.dto.ReverseLedgerEntryRequest;
 
 @Slf4j
 @Service
@@ -54,7 +55,12 @@ public class PaymentService {
             throw new IllegalArgumentException("Payment date cannot be in the future.");
         }
 
-        if (paymentRepository.existsByGatewayReference(request.getGatewayReference())) {
+        boolean cash = "CASH".equalsIgnoreCase(request.getPaymentMethod());
+        String suppliedReference = request.getGatewayReference() == null ? null : request.getGatewayReference().trim();
+        if (!cash && (suppliedReference == null || suppliedReference.isBlank())) {
+            throw new IllegalArgumentException("Transaction reference is required for non-cash payments");
+        }
+        if (!cash && paymentRepository.existsByGatewayReference(suppliedReference)) {
             throw new IllegalArgumentException("A payment with this gateway reference already exists.");
         }
 
@@ -77,6 +83,7 @@ public class PaymentService {
 
         // Generate unique internal receipt number
         String receiptNumber = documentNumbers.paymentReceipt();
+        String transactionReference = cash ? "CASH-" + receiptNumber : suppliedReference;
 
         Payment payment = new Payment();
         payment.setStudent(student);
@@ -85,7 +92,7 @@ public class PaymentService {
         payment.setPayerType(request.getPayerType());
         payment.setPayerName(request.getPayerType() == com.owuor.educue.finance.enums.PayerType.STUDENT
                 ? student.getFullName() : request.getPayerName().trim());
-        payment.setGatewayReference(request.getGatewayReference());
+        payment.setGatewayReference(transactionReference);
         payment.setPaymentMethod(request.getPaymentMethod());
         payment.setPaidAt(request.getPaidAt());
         payment.setReceiptNumber(receiptNumber);
@@ -101,13 +108,14 @@ public class PaymentService {
             case GOVERNMENT_LOAN -> TransactionType.LOAN_CREDIT;
             case BURSARY_PROVIDER -> TransactionType.BURSARY_ALLOCATION;
             case STUDENT -> request.getPaymentMethod().equalsIgnoreCase("MPESA")
-                    ? TransactionType.PAYMENT_MPESA : TransactionType.PAYMENT_BANK;
+                    ? TransactionType.PAYMENT_MPESA : request.getPaymentMethod().equalsIgnoreCase("CASH")
+                    ? TransactionType.PAYMENT_CASH : TransactionType.PAYMENT_BANK;
         };
 
         String detail = request.getRemarks() == null || request.getRemarks().isBlank()
                 ? "" : " - " + request.getRemarks().trim();
         String description = switch (request.getPayerType()) {
-            case STUDENT -> "Receipt Ref No." + payment.getReceiptNumber() + " - " + request.getGatewayReference();
+            case STUDENT -> "Receipt Ref No." + payment.getReceiptNumber() + " - " + transactionReference;
             case SPONSOR -> "SPONSOR " + payment.getPayerName() + detail + " - Receipt Ref No." + payment.getReceiptNumber();
             case GOVERNMENT_LOAN -> "HELB LOAN" + detail + " - Receipt Ref No." + payment.getReceiptNumber();
             case BURSARY_PROVIDER -> "BURSARY " + payment.getPayerName() + detail + " - Receipt Ref No." + payment.getReceiptNumber();
@@ -120,11 +128,32 @@ public class PaymentService {
         return toResponse(payment);
     }
 
+    public PaymentResponse reversePayment(Long paymentId, ReverseLedgerEntryRequest request, Long userId) {
+        Payment payment = paymentRepository.findByIdForUpdate(paymentId)
+                .orElseThrow(() -> new EntityNotFoundException("Transaction not found"));
+        if (payment.getStatus() == PaymentStatus.REVERSED) throw new IllegalArgumentException("This transaction has already been reversed");
+        feeLedgerService.reversePayment(payment, request, userId);
+        return toResponse(payment);
+    }
+
     @Transactional(readOnly = true)
-    public Page<PaymentResponse> searchPayments(Long studentId, String search, int page, int size) {
-        return paymentRepository.searchPayments(studentId, search, PageRequest.of(page, size))
+    public Page<PaymentResponse> searchPayments(Long studentId, String search, String method,
+            com.owuor.educue.finance.enums.PayerType payerType,
+            com.owuor.educue.finance.enums.PaymentStatus status,
+            java.time.LocalDate from, java.time.LocalDate to, int page, int size, String sort) {
+        String[] parts = (sort == null ? "paidAt,desc" : sort).split(",");
+        String property = java.util.Set.of("paidAt", "amount", "receiptNumber", "paymentMethod").contains(parts[0]) ? parts[0] : "paidAt";
+        var direction = parts.length > 1 && "asc".equalsIgnoreCase(parts[1])
+                ? org.springframework.data.domain.Sort.Direction.ASC : org.springframework.data.domain.Sort.Direction.DESC;
+        var pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100),
+                org.springframework.data.domain.Sort.by(direction, property).and(org.springframework.data.domain.Sort.by(direction, "id")));
+        return paymentRepository.searchPayments(studentId, search, blankToNull(method), payerType, status,
+                from == null ? java.time.LocalDateTime.of(1900, 1, 1, 0, 0) : from.atStartOfDay(),
+                to == null ? java.time.LocalDateTime.of(9999, 12, 31, 0, 0) : to.plusDays(1).atStartOfDay(), pageable)
                 .map(this::toResponse);
     }
+
+    private String blankToNull(String value) { return value == null || value.isBlank() ? null : value; }
 
     private PaymentResponse toResponse(Payment payment) {
         return PaymentResponse.builder()

@@ -8,6 +8,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Lock;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
@@ -15,6 +18,10 @@ import java.util.Optional;
 
 public interface StudentResultRepository
         extends JpaRepository<StudentResult, Long>, JpaSpecificationExecutor<StudentResult> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select r from StudentResult r where r.id = :id")
+    Optional<StudentResult> findByIdForAttemptRegistration(Long id);
 
     // Covers every relationship the HOD view's mapper touches - without
     // this, each result row would trigger a fresh round-trip to fetch
@@ -26,7 +33,7 @@ public interface StudentResultRepository
             "studentUnitRegistration.enrollment",
             "studentUnitRegistration.enrollment.student",
             "studentUnitRegistration.enrollment.currentCourseAcademicPeriod.academicPeriod",
-            "studentUnitRegistration.enrollment.intakeCourse.course",
+            "studentUnitRegistration.enrollment.course",
             "studentUnitRegistration.courseUnitPlacement",
             "studentUnitRegistration.courseUnitPlacement.unit",
             "recordedBy",
@@ -68,6 +75,11 @@ public interface StudentResultRepository
     findByStudentUnitRegistrationEnrollmentIdIn(
             List<Long> enrollmentIds
     );
+
+    @EntityGraph(attributePaths = {"studentUnitRegistration", "studentUnitRegistration.courseUnitPlacement", "studentUnitRegistration.courseUnitPlacement.unit"})
+    List<StudentResult> findByStudentUnitRegistrationEnrollmentId(Long enrollmentId);
+    @Query("select count(r)>0 from StudentResult r where r.studentUnitRegistration.enrollment.id=:enrollmentId and r.studentUnitRegistration.courseUnitPlacement.id=:placementId and r.passed=true and r.status in (com.owuor.educue.results.enums.ResultStatus.APPROVED,com.owuor.educue.results.enums.ResultStatus.RELEASED)")
+    boolean existsPassedAttempt(Long enrollmentId,Long placementId);
 
 
 

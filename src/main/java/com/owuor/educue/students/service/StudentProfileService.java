@@ -4,9 +4,7 @@ import com.owuor.educue.students.dto.StudentProfileResponse;
 import com.owuor.educue.students.entity.Enrollment;
 import com.owuor.educue.students.repository.EnrollmentRepository;
 import com.owuor.educue.finance.dto.FeeLedgerResponse;
-import com.owuor.educue.finance.dto.FeeStructureResponse;
 import com.owuor.educue.finance.service.FeeLedgerService;
-import com.owuor.educue.finance.service.FeeStructureService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class StudentProfileService {
 
     private final EnrollmentRepository enrollmentRepository;
-    private final FeeStructureService feeStructureService;
     private final FeeLedgerService feeLedgerService;
 
     public StudentProfileResponse getMyProfile(Long userId) {
@@ -32,7 +29,7 @@ public class StudentProfileService {
 
         var coursePeriod = enrollment.getCurrentCourseAcademicPeriod();
         var period = coursePeriod.getAcademicPeriod();
-        var course = enrollment.getIntakeCourse().getCourse();
+        var course = enrollment.getCourse();
 
         return StudentProfileResponse.builder()
                 .studentId(
@@ -56,6 +53,12 @@ public class StudentProfileService {
                 .courseName(
                         course.getName()
                 )
+                .intakeId(enrollment.getIntake().getId())
+                .intakeName(enrollment.getIntake().getName())
+                .enrolledAcademicYearUuid(enrollment.getEnrolledAcademicYear().getUuid())
+                .enrolledAcademicYearCode(enrollment.getEnrolledAcademicYear().getCode())
+                .currentAcademicYearUuid(enrollment.getCurrentAcademicYear().getUuid())
+                .currentAcademicYearCode(enrollment.getCurrentAcademicYear().getCode())
                 .currentYear(
                         period.getYearNumber()
                 )
@@ -71,14 +74,6 @@ public class StudentProfileService {
                         enrollment.getAdmissionDate()
                 )
                 .build();
-    }
-
-    public FeeStructureResponse getMyFeeStructure(Long userId) {
-        return feeStructureService.getStudentFeeStructure(userId);
-    }
-
-    public java.util.List<FeeStructureResponse> getAllMyFeeStructures(Long userId) {
-        return feeStructureService.getAllStudentFeeStructures(userId);
     }
 
     public java.util.List<FeeLedgerResponse> getMyLedger(Long userId) {

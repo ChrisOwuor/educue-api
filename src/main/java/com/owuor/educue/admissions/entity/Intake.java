@@ -6,11 +6,13 @@ import com.owuor.educue.institution.entity.AcademicYear;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import lombok.*;
+import org.hibernate.annotations.Generated;
+import org.hibernate.generator.EventType;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 
 @Entity
 @Table(name = "intakes")
@@ -45,5 +47,17 @@ public class Intake {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "academic_year_id", nullable = false)
     private AcademicYear academicYear;
+
+    @Generated(
+            event = EventType.INSERT,
+            sql = "nextval('intake_sequence_number_seq')"
+    )
+    @Column(
+            name = "sequence_number",
+            nullable = false,
+            unique = true,
+            updatable = false
+    )
+    private Long sequenceNumber;
 
 }

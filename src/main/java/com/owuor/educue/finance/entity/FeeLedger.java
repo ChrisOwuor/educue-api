@@ -42,9 +42,6 @@ public class FeeLedger {
     @Column(nullable = false, length = 30)
     private TransactionType transactionType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "fee_structure_id")
-    private FeeStructure feeStructure;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "payment_id")

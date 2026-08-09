@@ -3,6 +3,8 @@ package com.owuor.educue.admissions.controllers;
 import com.owuor.educue.admissions.dto.ApplicationDocumentResponse;
 import com.owuor.educue.admissions.dto.ApplicationResponse;
 import com.owuor.educue.admissions.dto.CreateApplicationRequest;
+import com.owuor.educue.admissions.dto.ApplicationSearchResponse;
+import com.owuor.educue.admissions.enums.ApplicationStatus;
 import com.owuor.educue.admissions.enums.DocumentType;
 import com.owuor.educue.admissions.service.AdmissionApprovalService;
 import com.owuor.educue.admissions.service.ApplicationService;
@@ -24,8 +26,6 @@ import java.util.Map;
 public class ApplicationController {
 
     private final ApplicationService applicationService;
-
-
 
 
     private final AdmissionApprovalService admissionApprovalService;
@@ -66,8 +66,13 @@ public class ApplicationController {
 
     @PreAuthorize("hasAuthority('view_student')")
     @GetMapping
-    public List<ApplicationResponse> getAll() {
-        return applicationService.getAll();
+    public ApplicationSearchResponse getAll(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) ApplicationStatus status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "submittedAt,desc") String sort) {
+        return applicationService.search(search, status, page, size, sort);
     }
 
     @PreAuthorize("hasAuthority('view_student')")
@@ -83,10 +88,15 @@ public class ApplicationController {
     }
 
 
-
     @PreAuthorize("hasAuthority('edit_student')")
     @PutMapping("/{id}/reject")
     public ApplicationResponse reject(@PathVariable Long id, @RequestBody Map<String, String> body) {
         return applicationService.reject(id, body.get("notes"));
+    }
+
+    @PreAuthorize("hasAuthority('edit_student')")
+    @PutMapping("/{id}/close")
+    public ApplicationResponse close(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body) {
+        return applicationService.close(id, body == null ? null : body.get("notes"));
     }
 }

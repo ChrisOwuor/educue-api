@@ -33,5 +33,7 @@ public class StudentUnitRegistrationResponse {
 
     String status;
 
+    String registrationOrigin;
+
     LocalDateTime registeredAt;
 }

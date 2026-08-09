@@ -1,0 +1,9 @@
+package com.owuor.educue.finance.claims;
+import com.owuor.educue.users.entity.User;import jakarta.validation.Valid;import lombok.RequiredArgsConstructor;import org.springframework.core.io.Resource;import org.springframework.http.*;import org.springframework.security.access.prepost.PreAuthorize;import org.springframework.security.core.annotation.AuthenticationPrincipal;import org.springframework.web.bind.annotation.*;import java.util.*;
+@RestController @RequestMapping("/api/debit-claims") @RequiredArgsConstructor public class DebitClaimController {private final DebitClaimService service;
+ @GetMapping @PreAuthorize("hasAnyRole('ADMIN','HOD','FINANCE')") public List<DebitClaimDtos.View> list(@AuthenticationPrincipal User user){return service.list(user);}
+ @GetMapping("/{uuid}") @PreAuthorize("hasAnyRole('ADMIN','HOD','FINANCE')") public DebitClaimDtos.View one(@PathVariable UUID uuid,@AuthenticationPrincipal User user){return service.one(uuid,user);}
+ @PostMapping @PreAuthorize("hasAnyRole('ADMIN','HOD')") public DebitClaimDtos.View create(@Valid @RequestBody DebitClaimDtos.Create request,@AuthenticationPrincipal User user){return service.create(request,user);}
+ @PostMapping("/{uuid}/confirm") @PreAuthorize("hasRole('FINANCE')") public DebitClaimDtos.View confirm(@PathVariable UUID uuid,@AuthenticationPrincipal User user){return service.confirm(uuid,user);}
+ @GetMapping("/{uuid}/files/{type}") @PreAuthorize("hasAnyRole('ADMIN','HOD','FINANCE')") public ResponseEntity<Resource> file(@PathVariable UUID uuid,@PathVariable String type,@AuthenticationPrincipal User user){Resource file=service.file(uuid,type,user);return ResponseEntity.ok().contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")).header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=debit-claim-"+uuid+"-"+type+".xlsx").body(file);}
+}

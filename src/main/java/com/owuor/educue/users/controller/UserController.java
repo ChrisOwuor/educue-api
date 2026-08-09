@@ -2,6 +2,7 @@ package com.owuor.educue.users.controller;
 
 import com.owuor.educue.users.dto.CreateUserRequest;
 import com.owuor.educue.users.dto.UserResponse;
+import com.owuor.educue.users.dto.UpdateUserRequest;
 import com.owuor.educue.users.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,5 +49,11 @@ public class UserController {
     @PatchMapping("/{id}/active")
     public UserResponse setActive(@PathVariable Long id, @RequestBody Map<String, Boolean> body) {
         return userService.setActive(id, body.getOrDefault("active", true));
+    }
+
+    @PreAuthorize("hasAuthority('manage_users')")
+    @PutMapping("/{id}")
+    public UserResponse update(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
+        return userService.update(id, request);
     }
 }

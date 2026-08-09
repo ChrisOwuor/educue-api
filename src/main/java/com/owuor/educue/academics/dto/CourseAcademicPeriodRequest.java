@@ -7,5 +7,6 @@ import java.util.UUID;
 
 public record CourseAcademicPeriodRequest(
         @NotNull UUID academicPeriodUuid,
-        @NotNull @Positive Integer position
+        @NotNull @Positive Integer position,
+        boolean finalPeriod
 ) {}

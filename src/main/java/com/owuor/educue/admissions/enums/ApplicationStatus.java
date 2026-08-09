@@ -5,5 +5,6 @@ public enum ApplicationStatus {
     UNDER_REVIEW,
     APPROVED,
     REJECTED,
-    WAITLISTED
+    WAITLISTED,
+    CLOSED
 }

@@ -41,7 +41,7 @@ public class CourseClassListPdfService {
                 String.valueOf(number.getAndIncrement()),
                 enrollment.getStudent().getAdmissionNumber(),
                 enrollment.getStudent().getFullName(),
-                enrollment.getIntakeCourse().getIntake().getName()
+                enrollment.getIntake().getName()
         )).toList();
 
         return pdfService.tableReport("Class List", details,

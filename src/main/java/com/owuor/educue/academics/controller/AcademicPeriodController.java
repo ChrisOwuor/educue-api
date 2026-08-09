@@ -26,7 +26,7 @@ public class AcademicPeriodController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @PreAuthorize("hasAuthority('manage_courses')")
-    public AcademicPeriodResponse create(@Valid @RequestBody CreateAcademicPeriodRequest request) {
+    public List<AcademicPeriodResponse> create(@Valid @RequestBody CreateAcademicPeriodRequest request) {
         return service.create(request);
     }
 

@@ -74,17 +74,23 @@ public class FeeLedgerController {
 
     @PreAuthorize("hasAnyRole('ADMIN', 'FINANCE')")
     @GetMapping("/export")
-    public ResponseEntity<byte[]> exportAllFinancialData() {
-        var entries = feeLedgerService.getAllLedgerEntries();
+    public ResponseEntity<byte[]> exportAllFinancialData(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) java.util.UUID academicPeriodUuid,
+            @RequestParam(required = false) com.owuor.educue.finance.enums.TransactionType transactionType,
+            @RequestParam(required = false) java.time.LocalDate fromDate,
+            @RequestParam(required = false) java.time.LocalDate toDate
+    ) {
+        var entries = feeLedgerService.getAllLedgerEntries(search, academicPeriodUuid, transactionType, fromDate, toDate);
         var details = new java.util.LinkedHashMap<String, String>();
         details.put("Ledger entries", String.valueOf(entries.size()));
         var rows = entries.stream().map(item -> java.util.List.of(
-                item.getPostingDate().toString(), item.getDocumentNumber(), item.getStudentName(),
-                item.getAcademicPeriodName() == null ? "" : item.getAcademicPeriodName(),
+                item.getPostingDate().toString(), item.getDocumentNumber(), item.getAdmissionNumber(),
                 item.getDescription(), item.getDebit().toString(), item.getCredit().toString(),
                 item.getRunningBalance().toString())).toList();
         byte[] pdf = pdfService.tableReport("Financial Ledger Report", details,
-                java.util.List.of("Posting date", "Document no.", "Student", "Academic period", "Description", "Debit", "Credit", "Balance"), rows);
+                java.util.List.of("Date", "Document no.", "Reg. no.", "Description", "Debit", "Credit", "Balance"), rows,
+                new float[]{1.15f, 1.25f, 1.30f, 2.85f, 1.15f, 1.15f, 1.10f});
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=financial-ledger.pdf")
                 .contentType(MediaType.APPLICATION_PDF).body(pdf);
     }

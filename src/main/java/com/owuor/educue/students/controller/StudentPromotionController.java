@@ -1,20 +1,16 @@
 package com.owuor.educue.students.controller;
 
-import com.owuor.educue.students.dto.BulkPromotionRequest;
-import com.owuor.educue.students.dto.PromoteStudentsRequest;
-import com.owuor.educue.students.dto.PromotionResultResponse;
-import com.owuor.educue.students.dto.StudentPromotionRowResponse;
+import com.owuor.educue.students.dto.*;
+import com.owuor.educue.students.service.PromotionJobService;
 import com.owuor.educue.students.service.StudentPromotionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/academic/promotions")
@@ -22,30 +18,30 @@ import java.util.List;
 public class StudentPromotionController {
 
     private final StudentPromotionService promotionService;
+    private final PromotionJobService promotionJobService;
 
-//    @PostMapping
-//    @PreAuthorize("hasAuthority('promote_students')")
-//    public ResponseEntity<List<PromotionResultResponse>> processBulkPromotion(
-//            @RequestBody BulkPromotionRequest request
-//    ) {
-//        return ResponseEntity.ok(promotionService.promoteStudents(request));
-//    }
-
+    /** Paginated table of promotion candidates with eligibility status. */
     @GetMapping
-    @PreAuthorize("hasAuthority('promote_students')") // Matches your access control configuration
+    @PreAuthorize("hasAuthority('promote_students')")
     public ResponseEntity<Page<StudentPromotionRowResponse>> getPromotionDashboard(
-            @RequestParam(required = false) String search,
-            Pageable pageable
-    ) {
+            @RequestParam(required = false) String search, Pageable pageable) {
         return ResponseEntity.ok(promotionService.getPromotionManagementTable(search, pageable));
     }
 
-
+    /**
+     * Enqueue a promotion batch. Returns immediately with a batchId.
+     * The PromotionWorker processes jobs in the background.
+     */
     @PostMapping("/promote")
     @PreAuthorize("hasAuthority('manage_results')")
-    public void promoteStudents(
-            @RequestBody PromoteStudentsRequest request
-    ) {
-        promotionService.promoteStudents(request);
+    public ResponseEntity<PromotionBatchResponse> promoteStudents(@RequestBody PromoteStudentsRequest request) {
+        return ResponseEntity.accepted().body(promotionService.enqueuePromotion(request));
+    }
+
+    /** Poll batch status: pending / processing / completed / skipped / failed counts. */
+    @GetMapping("/batch/{batchId}")
+    @PreAuthorize("hasAuthority('promote_students')")
+    public ResponseEntity<PromotionBatchStatus> getBatchStatus(@PathVariable UUID batchId) {
+        return ResponseEntity.ok(promotionJobService.getBatchStatus(batchId));
     }
 }

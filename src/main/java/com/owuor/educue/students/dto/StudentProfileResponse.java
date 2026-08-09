@@ -22,6 +22,18 @@ public record StudentProfileResponse(
 
         String courseName,
 
+        Long intakeId,
+
+        String intakeName,
+
+        java.util.UUID enrolledAcademicYearUuid,
+
+        String enrolledAcademicYearCode,
+
+        java.util.UUID currentAcademicYearUuid,
+
+        String currentAcademicYearCode,
+
         Integer currentYear,
 
         java.util.UUID courseAcademicPeriodUuid,
