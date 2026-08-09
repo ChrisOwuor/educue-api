@@ -166,15 +166,20 @@ jobs:
 
           echo "Deployable JAR:"
           echo "$JAR"
-          echo
 
           cp "$JAR" deployment/educue.jar
 
-          sha256sum deployment/educue.jar \
-            > deployment/educue.jar.sha256
+          cd deployment
 
-          echo "Prepared deployment artifact:"
-          ls -lh deployment/
+          sha256sum educue.jar > educue.jar.sha256
+
+          echo
+          echo "Checksum:"
+          cat educue.jar.sha256
+
+          echo
+          echo "Deployment files:"
+          ls -lh
 
 
       # -------------------------------------------------------
