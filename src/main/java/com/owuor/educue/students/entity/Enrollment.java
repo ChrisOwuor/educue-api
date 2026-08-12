@@ -4,6 +4,7 @@ import com.owuor.educue.academics.entity.CourseAcademicPeriod;
 import com.owuor.educue.academics.entity.Course;
 import com.owuor.educue.admissions.entity.Intake;
 import com.owuor.educue.institution.entity.AcademicYear;
+import com.owuor.educue.institution.entity.Department;
 import com.owuor.educue.students.enums.EnrollmentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -35,6 +36,14 @@ public class Enrollment {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "course_id", nullable = false)
     private Course course;
+
+    /**
+     * Department snapshot used for ownership and high-volume enrollment queries.
+     * Nullable only while legacy rows are being backfilled.
+     */
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "department_id", nullable = false)
+    private Department department;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "intake_id", nullable = false)

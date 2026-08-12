@@ -83,7 +83,6 @@ public class StudentOnboardingService {
         if (currentYear.getStartYear() < enrolledYear.getStartYear())
             throw new IllegalArgumentException("Current academic year cannot be before the enrolled academic year");
 
-        String temporaryPassword = admissionNumber + "@" + currentYear.getStartYear();
         User user = new User();
         user.setFullName(request.fullName().trim());
         user.setEmail(email);
@@ -91,7 +90,7 @@ public class StudentOnboardingService {
         user.setRole(roleRepository.findByName("STUDENT")
                 .orElseThrow(() -> new EntityNotFoundException("Student role not configured")));
         user.setDepartment(course.getDepartment());
-        user.setPasswordHash(passwordEncoder.encode(temporaryPassword));
+        user.setPasswordHash(passwordEncoder.encode(admissionNumber));
         user.setMustChangePassword(true);
         user = userRepository.save(user);
 
@@ -110,6 +109,7 @@ public class StudentOnboardingService {
         Enrollment enrollment = new Enrollment();
         enrollment.setStudent(student);
         enrollment.setCourse(course);
+        enrollment.setDepartment(course.getDepartment());
         enrollment.setIntake(intake);
         enrollment.setEnrolledAcademicYear(enrolledYear);
         enrollment.setCurrentAcademicYear(currentYear);
@@ -144,7 +144,7 @@ public class StudentOnboardingService {
             );
         }
         return new CreatedStudentEnrollmentResponse(student.getId(), enrollment.getId(), user.getId(),
-                admissionNumber, student.getFullName(), temporaryPassword);
+                admissionNumber, student.getFullName(), admissionNumber);
     }
 
     @Transactional

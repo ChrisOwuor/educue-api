@@ -1,6 +1,7 @@
 package com.owuor.educue.students.repository;
 
 import com.owuor.educue.students.dto.PromotionStats;
+import com.owuor.educue.students.dto.EnrollmentOverviewResponse;
 import com.owuor.educue.students.dto.StudentPromotionRowResponse;
 import com.owuor.educue.students.entity.Enrollment;
 import com.owuor.educue.students.enums.EnrollmentStatus;
@@ -25,9 +26,35 @@ public interface EnrollmentRepository
 
     Optional<Enrollment> findByUuid(UUID uuid);
 
+    @Query(value = """
+            SELECT new com.owuor.educue.students.dto.EnrollmentOverviewResponse(
+                e.uuid, e.student.admissionNumber,
+                e.currentCourseAcademicPeriod.academicPeriod.code,
+                e.currentCourseAcademicPeriod.academicPeriod.name,
+                e.course.code, e.course.name, e.status, e.admissionDate)
+            FROM Enrollment e
+            WHERE (:status IS NULL OR e.status = :status)
+              AND (:search = '' OR lower(e.student.admissionNumber) like concat('%', :search, '%'))
+            """,
+            countQuery = """
+            SELECT count(e) FROM Enrollment e
+            WHERE (:status IS NULL OR e.status = :status)
+              AND (:search = '' OR lower(e.student.admissionNumber) like concat('%', :search, '%'))
+            """)
+    Page<EnrollmentOverviewResponse> findOverview(
+            @Param("search") String search,
+            @Param("status") EnrollmentStatus status,
+            Pageable pageable);
+
+    @EntityGraph(attributePaths = {"student", "course.department", "department", "intake",
+            "enrolledAcademicYear", "currentAcademicYear", "currentCourseAcademicPeriod.academicPeriod"})
+    @Query("select e from Enrollment e where e.uuid = :uuid")
+    Optional<Enrollment> findDetailedByUuid(UUID uuid);
+
     @Override
     @EntityGraph(attributePaths = {
             "student",
+            "student.user",
             "course",
             "intake",
             "enrolledAcademicYear",
@@ -61,23 +88,6 @@ public interface EnrollmentRepository
     @EntityGraph(attributePaths = {"student", "course", "intake", "enrolledAcademicYear", "currentAcademicYear", "currentCourseAcademicPeriod.academicPeriod"})
     Optional<Enrollment> findByStudentId(Long studentId);
 
-
-    @EntityGraph(attributePaths = {"student", "currentCourseAcademicPeriod", "currentCourseAcademicPeriod.nextPeriod"})
-    Page<Enrollment> findByStatusAndCurrentCourseAcademicPeriodId(
-            EnrollmentStatus status,
-            Long courseAcademicPeriodId,
-            Pageable pageable
-    );
-
-    @EntityGraph(attributePaths = {
-            "student",
-            "currentCourseAcademicPeriod",
-            "currentCourseAcademicPeriod.nextPeriod"
-    })
-    Page<Enrollment> findByStatus(
-            EnrollmentStatus status,
-            Pageable pageable
-    );
 
     @EntityGraph(attributePaths = {
             "student",

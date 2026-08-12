@@ -24,8 +24,8 @@ public record UserResponse(
                 user.getPhone(),
                 user.getUsername(),
                 user.getRole().getName(),
-                user.getDepartment() == null ? null : user.getDepartment().getId(),
-                user.getDepartment() == null ? null : user.getDepartment().getName(),
+                user.getDepartment().getId(),
+                user.getDepartment().getName(),
                 user.isActive(),
                 user.isMustChangePassword()
         );

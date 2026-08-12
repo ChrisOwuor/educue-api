@@ -70,6 +70,12 @@ public class GraduationReadinessService {
             blockers.add(new Blocker("CONFIGURATION", "CREDITS", "Required course credits are not configured"));
         else if (earnedCredits < requiredCredits)
             blockers.add(new Blocker("INSUFFICIENT_CREDITS", "CREDITS", earnedCredits + " of " + requiredCredits + " credits attained"));
+
+        // Admission to a graduation list is an academic decision. Clearance is
+        // a later workflow that only starts after the candidate is on the list,
+        // so it must not make academic eligibility impossible to attain.
+        boolean academicallyEligible = blockers.isEmpty();
+
         var clearance = clearanceRepository.findByEnrollmentIdAndAcademicYearId(e.getId(), e.getCurrentAcademicYear().getId()).orElse(null);
         Set<Long> requiredDepartments = new HashSet<>();
         requiredDepartments.add(e.getCourse().getDepartment().getId());
@@ -81,7 +87,6 @@ public class GraduationReadinessService {
         if (!clearanceComplete) for (Long id : requiredDepartments)
             if (!cleared.contains(id))
                 blockers.add(new Blocker("CLEARANCE", String.valueOf(id), "A required department has not cleared the student"));
-        boolean eligible = blockers.isEmpty();
-        return new GraduationReadinessResponse(eligible ? "ELIGIBLE" : requiredCredits == null ? "REQUIRES_REVIEW" : "NOT_ELIGIBLE", eligible, e.getCourse().getCode(), e.getCourse().getName(), finalPeriod, required.size(), passed, failed, missing, missingResults, requiredCredits, earnedCredits, clearanceComplete, requiredDepartments.size(), (int) requiredDepartments.stream().filter(cleared::contains).count(), LocalDateTime.now(), blockers);
+        return new GraduationReadinessResponse(academicallyEligible ? "ELIGIBLE" : requiredCredits == null ? "REQUIRES_REVIEW" : "NOT_ELIGIBLE", academicallyEligible, e.getCourse().getCode(), e.getCourse().getName(), finalPeriod, required.size(), passed, failed, missing, missingResults, requiredCredits, earnedCredits, clearanceComplete, requiredDepartments.size(), (int) requiredDepartments.stream().filter(cleared::contains).count(), LocalDateTime.now(), blockers);
     }
 }

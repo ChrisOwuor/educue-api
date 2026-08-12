@@ -1,34 +1,29 @@
-# EduCue database migrations
+# EduCue production baseline
 
 Flyway owns the PostgreSQL schema and Hibernate validates it with
-`ddl-auto: validate`. These migrations target a fresh database and represent
-the application's current entity model.
+`ddl-auto: validate`. This seven-file baseline is only for a fresh database.
 
-The six migrations are applied in this order:
+Schema and reference migrations:
 
 1. `V1__foundation_and_security.sql`
 2. `V2__academics_and_admissions.sql`
 3. `V3__finance_and_enrollment.sql`
 4. `V4__student_completion.sql`
 5. `V5__seed_reference_data.sql`
-6. `V6__seed_institution_and_staff.sql`
 
-V5 seeds roles, permissions, their mappings, and the initial unit catalogue.
-V6 seeds the school profile, Administration, Registrar, Finance, and Human
-Health departments, academic years beginning in September from 2020/2021
-through 2026/2027, and the initial staff accounts.
+User seeders:
 
-Seeded staff emails:
+6. `V6__seed_core_users.sql`
+7. `V7__seed_academic_users.sql`
 
-- `admin@educue.local`
-- `registrar@educue.local`
-- `finance@educue.local`
-- `hod@educue.local`
-- `trainer@educue.local`
+All users, including administrators, registrars and finance staff, belong to
+an explicit department. The bootstrap password is `ChangeMe@123`; every seeded
+account must change it after first login.
 
-Every seeded account starts with `ChangeMe@123` and must change it after the
-first login.
+Unit codes use a subject prefix and a stage suffix. The suffix maps directly
+to the course period: `101/102`, `201/202`, `301/302`, `401/402`, `501/502`,
+and `601/602`. Examples are `NUR 101`, `BIO 202` and `COMP 102`.
 
-These files replace the previous development history and are intended for a
-new database. Never edit one after it has been applied; add a new incremented
-migration for subsequent changes.
+Do not install this replacement history over a database that already contains
+the previous Flyway history. It is valid because the target database was
+explicitly cleared. Future changes must be new incremented migrations.

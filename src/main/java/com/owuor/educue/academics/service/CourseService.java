@@ -150,6 +150,39 @@ public class CourseService {
         return map(saved);
     }
 
+    @Transactional
+    public CourseResponse update(UUID uuid, CreateCourseRequest req) {
+        Course course = courseRepository.findByUuid(uuid)
+                .orElseThrow(() -> new EntityNotFoundException("Course not found"));
+        Department department = departmentRepository.findById(req.getDepartmentId())
+                .orElseThrow(() -> new EntityNotFoundException("Department not found"));
+
+        List<CourseAcademicPeriod> existingPeriods = courseAcademicPeriodRepository
+                .findByCourseIdOrderByPosition(course.getId());
+        List<UUID> requestedPeriods = req.getAcademicPeriods().stream()
+                .sorted(java.util.Comparator.comparing(CourseAcademicPeriodRequest::position))
+                .map(CourseAcademicPeriodRequest::academicPeriodUuid)
+                .toList();
+        List<UUID> storedPeriods = existingPeriods.stream()
+                .map(period -> period.getAcademicPeriod().getUuid())
+                .toList();
+        if (!storedPeriods.equals(requestedPeriods)) {
+            throw new IllegalArgumentException(
+                    "Academic periods cannot be replaced after course creation; update unit placements and fees separately");
+        }
+
+        course.setDepartment(department);
+        course.setName(req.getName().trim());
+        course.setDurationValue(req.getDurationValue());
+        course.setDurationUnit(req.getDurationUnit());
+        course.setQualificationType(req.getQualificationType());
+        course.setStudyMode(req.getStudyMode());
+        course.setTotalCredits(req.getTotalCredits());
+        course.setAwardTitle(req.getAwardTitle());
+        course.setActive(req.getActive() == null || req.getActive());
+        return map(courseRepository.save(course));
+    }
+
     @Transactional(readOnly = true)
     public CourseResponse getByUuid(UUID uuid) {
         Course course = courseRepository.findByUuid(uuid)
@@ -174,6 +207,8 @@ public class CourseService {
         res.setName(c.getName());
         res.setDurationValue(c.getDurationValue());
         res.setDepartmentName(c.getDepartment().getName());
+        res.setDepartmentId(c.getDepartment().getId());
+        res.setDurationUnit(c.getDurationUnit());
         res.setQualificationType(c.getQualificationType());
         res.setStudyMode(c.getStudyMode());
         res.setTotalCredits(c.getTotalCredits());

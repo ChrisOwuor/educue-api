@@ -199,7 +199,7 @@ CREATE TABLE public.users (
     updated_at timestamp(6) without time zone NOT NULL,
     username character varying(80),
     version bigint NOT NULL,
-    department_id bigint,
+    department_id bigint NOT NULL,
     role_id bigint NOT NULL
 );
 
