@@ -14,6 +14,7 @@ public class CourseResponse {
     private String code;
     private String name;
     private String departmentName;
+    private Long departmentId;
     private Integer durationValue;
     private QualificationType qualificationType;
     private StudyMode studyMode;

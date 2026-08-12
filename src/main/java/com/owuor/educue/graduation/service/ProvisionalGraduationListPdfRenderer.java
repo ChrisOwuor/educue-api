@@ -7,7 +7,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.draw.LineSeparator;
 import com.owuor.educue.academics.service.PdfFooterPageEvent;
 import com.owuor.educue.common.report.InstitutionPdfHeaderRenderer;
-import com.owuor.educue.graduation.entity.GraduationApplication;
+import com.owuor.educue.graduation.entity.GraduationCandidate;
 import com.owuor.educue.graduation.entity.GraduationList;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -29,7 +29,15 @@ public class ProvisionalGraduationListPdfRenderer {
     private static final Color MUTED = new Color(85, 85, 85);
     private final InstitutionPdfHeaderRenderer headerRenderer;
 
-    public byte[] render(GraduationList list, List<GraduationApplication> candidates) {
+    public byte[] render(GraduationList list, List<GraduationCandidate> candidates) {
+        return render(list, candidates, false);
+    }
+
+    public byte[] renderFinal(GraduationList list, List<GraduationCandidate> candidates) {
+        return render(list, candidates, true);
+    }
+
+    private byte[] render(GraduationList list, List<GraduationCandidate> candidates, boolean finalList) {
         try {
             var output = new ByteArrayOutputStream();
             var document = new Document(PageSize.A4.rotate(), 28, 28, 28, 48);
@@ -38,10 +46,10 @@ public class ProvisionalGraduationListPdfRenderer {
             document.open();
 
             headerRenderer.render(document, reference(list));
-            addTitle(document, list);
+            addTitle(document, list, finalList);
             addListDetails(document, list, candidates.size());
             addCandidates(document, candidates);
-            addNotice(document, list);
+            addNotice(document, list, finalList);
             addApprovalSection(document);
 
             document.close();
@@ -51,8 +59,8 @@ public class ProvisionalGraduationListPdfRenderer {
         }
     }
 
-    private void addTitle(Document document, GraduationList list) throws DocumentException {
-        String title = "PROVISIONAL".equals(list.getStatus())
+    private void addTitle(Document document, GraduationList list, boolean finalList) throws DocumentException {
+        String title = finalList ? "FINAL GRADUATION LIST" : "PROVISIONAL".equals(list.getStatus())
                 ? "PROVISIONAL DEPARTMENTAL GRADUATION LIST"
                 : "DEPARTMENTAL GRADUATION LIST";
         var heading = new Paragraph(title, font(13, Font.BOLD, Color.BLACK));
@@ -81,7 +89,7 @@ public class ProvisionalGraduationListPdfRenderer {
         document.add(details);
     }
 
-    private void addCandidates(Document document, List<GraduationApplication> candidates) throws DocumentException {
+    private void addCandidates(Document document, List<GraduationCandidate> candidates) throws DocumentException {
         var table = new PdfPTable(new float[]{.45f, 1.25f, 2.15f, 1.05f, 3.15f, .8f, 2.05f});
         table.setWidthPercentage(100);
         table.setHeaderRows(1);
@@ -117,8 +125,17 @@ public class ProvisionalGraduationListPdfRenderer {
         document.add(table);
     }
 
-    private void addNotice(Document document, GraduationList list) throws DocumentException {
+    private void addNotice(Document document, GraduationList list, boolean finalList) throws DocumentException {
         document.add(new LineSeparator(.5f, 100, BORDER, Element.ALIGN_CENTER, 0));
+        if (finalList) {
+            var notice = new Paragraph("FINAL LIST: Every candidate on this document has completed clearance and received formal Registrar approval for graduation.", font(6.8f, Font.ITALIC, MUTED));
+            notice.setAlignment(Element.ALIGN_JUSTIFIED);
+            notice.setLeading(9);
+            notice.setSpacingBefore(5);
+            notice.setSpacingAfter(18);
+            document.add(notice);
+            return;
+        }
         String state = "PROVISIONAL".equals(list.getStatus()) ? "PROVISIONAL LIST NOTICE" : "WORKING LIST NOTICE";
         var notice = new Paragraph(state + ": This list is subject to verification of academic records, candidate details, graduation clearance and formal approval by the Registrar. Inclusion on this document does not by itself confer an award or confirm graduation.", font(6.8f, Font.ITALIC, MUTED));
         notice.setAlignment(Element.ALIGN_JUSTIFIED);

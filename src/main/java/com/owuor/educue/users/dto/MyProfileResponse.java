@@ -7,6 +7,6 @@ public record MyProfileResponse(Long id, String fullName, String email, String p
     public static MyProfileResponse from(User user) {
         return new MyProfileResponse(user.getId(), user.getFullName(), user.getEmail(), user.getPhone(),
                 user.getUsername(), user.getAvatarUrl(), user.getRole().getName(),
-                user.getDepartment() == null ? null : user.getDepartment().getName());
+                user.getDepartment().getName());
     }
 }

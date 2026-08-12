@@ -109,13 +109,6 @@ public class StudentUnitRegistrationController {
                 .body(pdf);
     }
 
-    @PreAuthorize("hasAnyRole('HOD','ADMIN')")
-    @GetMapping("non-paginated")
-    public List<StudentUnitRegistrationResponse> getAllRegistrations() {
-
-        return registrationService.getAllRegistrations();
-    }
-
     @GetMapping
     public Page<StudentUnitRegistrationResponse> getRegistrations(
             StudentUnitRegistrationFilterRequest filter,

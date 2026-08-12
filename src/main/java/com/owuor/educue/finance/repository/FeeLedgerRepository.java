@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import com.owuor.educue.finance.enums.TransactionType;
 
 public interface FeeLedgerRepository extends JpaRepository<FeeLedger, Long> {
 
@@ -19,6 +20,7 @@ public interface FeeLedgerRepository extends JpaRepository<FeeLedger, Long> {
 
     boolean existsByReversalOfId(Long ledgerId);
     boolean existsByExternalReference(String externalReference);
+    boolean existsByStudentIdAndTransactionType(Long studentId, TransactionType transactionType);
 
     Optional<FeeLedger> findTopByStudentIdOrderByIdDesc(Long studentId);
     Optional<FeeLedger> findByPaymentId(Long paymentId);

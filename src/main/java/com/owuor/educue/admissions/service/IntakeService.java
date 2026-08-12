@@ -190,9 +190,14 @@ public class IntakeService {
         Intake intake = findEntity(intakeId);
         requireDraft(intake);
         Course course = findCourse(courseId);
-        if (confirmed && !configurationView(intake, course, null, false).unitsConfigured()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Configure units for the first course period before confirming academics");
+        if (confirmed) {
+            var periods = courseAcademicPeriodRepository.findByCourseIdOrderByPosition(courseId);
+            if (periods.isEmpty() || periods.stream().anyMatch(period ->
+                    courseUnitPlacementRepository.findEffectiveForPeriodAndIntakeSequence(
+                            period.getId(), intake.getSequenceNumber()).isEmpty())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Configure units for every course period before confirming academics");
+            }
         }
         CourseIntakeConfiguration config = findOrCreateConfiguration(intake, course);
         config.setAcademicConfirmed(confirmed);
@@ -206,9 +211,14 @@ public class IntakeService {
         Intake intake = findEntity(intakeId);
         requireDraft(intake);
         Course course = findCourse(courseId);
-        if (confirmed && !configurationView(intake, course, null, false).feesConfigured()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT,
-                    "Configure fees for the first course period before confirming finance");
+        if (confirmed) {
+            var periods = courseAcademicPeriodRepository.findByCourseIdOrderByPosition(courseId);
+            if (periods.isEmpty() || periods.stream().anyMatch(period ->
+                    periodFeeItemRepository.findEffectiveFees(
+                            period.getUuid(), intake.getSequenceNumber()).isEmpty())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT,
+                        "Configure fees for every course period before confirming finance");
+            }
         }
         CourseIntakeConfiguration config = findOrCreateConfiguration(intake, course);
         config.setFeeConfirmed(confirmed);

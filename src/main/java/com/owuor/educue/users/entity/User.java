@@ -63,9 +63,9 @@ public class User implements UserDetails {
     @Column(name = "avatar_url", length = 1000)
     private String avatarUrl;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
-    private Department department; // nullable - not every role (e.g. ADMIN) needs one
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "department_id", nullable = false)
+    private Department department;
 
 
     @Column(name = "must_change_password")

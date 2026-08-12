@@ -37,11 +37,8 @@ public class UserService {
         Role role = roleRepository.findById(request.roleId())
                 .orElseThrow(() -> new EntityNotFoundException("Role not found"));
 
-        Department department = null;
-        if (request.departmentId() != null) {
-            department = departmentRepository.findById(request.departmentId())
-                    .orElseThrow(() -> new EntityNotFoundException("Department not found"));
-        }
+        Department department = departmentRepository.findById(request.departmentId())
+                .orElseThrow(() -> new EntityNotFoundException("Department not found"));
 
         User user = new User();
         user.setFullName(request.fullName());
@@ -87,7 +84,7 @@ public class UserService {
         if (username != null && userRepository.existsByUsernameIgnoreCaseAndIdNot(username, id)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "A user with this username already exists");
         }
-        Department department = request.departmentId() == null ? null : departmentRepository.findById(request.departmentId())
+        Department department = departmentRepository.findById(request.departmentId())
                 .orElseThrow(() -> new EntityNotFoundException("Department not found"));
         user.setFullName(request.fullName().trim());
         user.setEmail(email);

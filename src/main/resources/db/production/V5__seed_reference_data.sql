@@ -52,50 +52,74 @@ JOIN roles r ON r.name=m.role_name JOIN permissions p ON p.name=m.permission_nam
 ON CONFLICT DO NOTHING;
 
 INSERT INTO departments (name,description,active,created_at,updated_at)
-VALUES ('Administration','System administration and initial institutional setup',TRUE,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+VALUES
+ ('Administration','System administration and initial institutional setup',TRUE,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+ ('Registrar','Admissions, enrollment and academic records',TRUE,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+ ('Finance','Fees, payments and institutional finance',TRUE,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+ ('Human Health','Human health academic programmes and training',TRUE,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
 ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO institution_profiles (id,uuid,name,short_name,motto,registration_number,official_email,phone,address,website,version,created_at,updated_at)
+VALUES (1,'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11','Apex Institute of Technology','AIT',
+        'Excellence Through Innovation','REG-2026-90412','info@apexinstitute.edu','+1 (555) 019-2834',
+        '123 University Ave, Suite 400, Tech City, CA 94016','https://www.apexinstitute.edu',0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO academic_years (uuid,code,start_date,start_year,end_date,current,closed,active,version,created_at,updated_at) VALUES
+ (gen_random_uuid(),'2020/2021',DATE '2020-09-01',2020,DATE '2021-08-31',FALSE,TRUE,TRUE,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+ (gen_random_uuid(),'2021/2022',DATE '2021-09-01',2021,DATE '2022-08-31',FALSE,TRUE,TRUE,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+ (gen_random_uuid(),'2022/2023',DATE '2022-09-01',2022,DATE '2023-08-31',FALSE,TRUE,TRUE,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+ (gen_random_uuid(),'2023/2024',DATE '2023-09-01',2023,DATE '2024-08-31',FALSE,TRUE,TRUE,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+ (gen_random_uuid(),'2024/2025',DATE '2024-09-01',2024,DATE '2025-08-31',FALSE,TRUE,TRUE,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+ (gen_random_uuid(),'2025/2026',DATE '2025-09-01',2025,DATE '2026-08-31',TRUE,FALSE,TRUE,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+ (gen_random_uuid(),'2026/2027',DATE '2026-09-01',2026,DATE '2027-08-31',FALSE,FALSE,TRUE,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)
+ON CONFLICT (code) DO NOTHING;
 
 -- The reusable starter catalogue is owned temporarily by Administration.
 -- Units can be moved to their final academic departments during school setup.
 INSERT INTO units (uuid,department_id,code,name,credit_hours,description,active,version,created_at,updated_at)
 SELECT gen_random_uuid(),d.id,v.code,v.name,v.credits,v.description,TRUE,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP
 FROM departments d CROSS JOIN (VALUES
- ('CHN101','Principles of Community Health',3,'Community diagnosis, prevention and primary healthcare principles'),
- ('CHN102','Health Promotion and Education',3,'Planning and delivering behaviour-change and health-education interventions'),
- ('CHN201','Epidemiology and Disease Surveillance',4,'Measurement, investigation and reporting of disease patterns'),
- ('CHN202','Environmental and Occupational Health',3,'Environmental hazards, sanitation and workplace health protection'),
- ('CHN301','Maternal and Child Community Health',4,'Community-level reproductive, maternal, newborn and child health services'),
- ('CHN302','Community Health Practicum',6,'Supervised community assessment, intervention and evaluation practice'),
- ('FND101','Medical Terminology',3,'Medical vocabulary used in clinical documentation and communication'),
- ('FND102','Communication Skills in Healthcare',3,'Patient-centred, interprofessional and written healthcare communication'),
- ('FND103','Human Anatomy and Physiology',4,'Structure and normal function of major human body systems'),
- ('FND104','Medical Biochemistry',4,'Biochemical processes relevant to human health and disease'),
- ('FND105','Healthcare Ethics and Law',3,'Ethical practice, patient rights, consent and health-sector legal duties'),
- ('FND106','First Aid and Basic Life Support',3,'Immediate emergency response, CPR and basic stabilization skills'),
- ('FND107','Research Methods and Biostatistics',3,'Health research design, data interpretation and introductory statistics'),
- ('FND108','Infection Prevention and Control',3,'Standard precautions, sterilization, isolation and healthcare-associated infection control'),
+ ('CHN 101','Principles of Community Health',3,'Community diagnosis, prevention and primary healthcare principles'),
+ ('CHN 102','Health Promotion and Education',3,'Planning and delivering behaviour-change and health-education interventions'),
+ ('CHN 201','Epidemiology and Disease Surveillance',4,'Measurement, investigation and reporting of disease patterns'),
+ ('CHN 202','Environmental and Occupational Health',3,'Environmental hazards, sanitation and workplace health protection'),
+ ('CHN 301','Maternal and Child Community Health',4,'Community-level reproductive, maternal, newborn and child health services'),
+ ('CHN 302','Community Health Practicum',6,'Supervised community assessment, intervention and evaluation practice'),
+ ('FND 101','Medical Terminology',3,'Medical vocabulary used in clinical documentation and communication'),
+ ('COM 102','Communication Skills in Healthcare',3,'Patient-centred, interprofessional and written healthcare communication'),
+ ('ANA 101','Human Anatomy and Physiology',4,'Structure and normal function of major human body systems'),
+ ('BCH 102','Medical Biochemistry',4,'Biochemical processes relevant to human health and disease'),
+ ('ETH 101','Healthcare Ethics and Law',3,'Ethical practice, patient rights, consent and health-sector legal duties'),
+ ('BLS 102','First Aid and Basic Life Support',3,'Immediate emergency response, CPR and basic stabilization skills'),
+ ('RES 201','Research Methods and Biostatistics',3,'Health research design, data interpretation and introductory statistics'),
+ ('IPC 102','Infection Prevention and Control',3,'Standard precautions, sterilization, isolation and healthcare-associated infection control'),
  ('MED101','Clinical Examination and Diagnostics',4,'Patient history, physical examination and selection of diagnostic tests'),
  ('MED102','General Pathology',4,'Mechanisms, morphology and clinical effects of disease'),
  ('MED201','Clinical Pharmacology',4,'Drug actions, indications, contraindications and safe prescribing principles'),
  ('MED202','Internal Medicine',5,'Diagnosis and non-operative management of adult medical conditions'),
  ('MED301','General Surgery',5,'Surgical assessment, perioperative care and common surgical conditions'),
  ('MED302','Pediatrics and Child Health',5,'Diagnosis and management of common childhood conditions'),
- ('MED303','Obstetrics and Gynaecology',5,'Reproductive health, pregnancy care and common gynaecological conditions'),
- ('MED304','Emergency Medicine',5,'Triage, resuscitation and initial management of acute emergencies'),
+ ('OBG 301','Obstetrics and Gynaecology',5,'Reproductive health, pregnancy care and common gynaecological conditions'),
+ ('EMG 302','Emergency Medicine',5,'Triage, resuscitation and initial management of acute emergencies'),
  ('MLT101','Hematology I',4,'Blood cell morphology, hematological tests and common blood disorders'),
  ('MLT102','Clinical Chemistry I',4,'Biochemical analysis of body fluids for clinical diagnosis'),
  ('MLT201','Medical Microbiology',4,'Isolation and identification of medically important microorganisms'),
  ('MLT202','Immunology and Serology',4,'Immune mechanisms and serological diagnostic techniques'),
  ('MLT301','Histopathology and Cytology',5,'Tissue processing, microscopy and cellular diagnostic techniques'),
  ('MLT302','Laboratory Quality Management',4,'Quality assurance, biosafety, equipment control and laboratory accreditation principles'),
- ('NUR101','Foundations of Nursing Practice',4,'Fundamental nursing procedures, safety, dignity and professional conduct'),
- ('NUR102','Health Assessment',4,'Systematic history-taking, physical examination and nursing assessment'),
- ('NUR201','Medical-Surgical Nursing I',4,'Nursing management of common adult medical and surgical conditions'),
- ('NUR202','Maternal and Newborn Health',4,'Antenatal, intrapartum, postnatal and newborn nursing care'),
- ('NUR301','Pediatric Nursing',4,'Nursing care of infants, children and adolescents'),
- ('NUR302','Mental Health Nursing',4,'Assessment and nursing care for common mental-health conditions'),
- ('NUR401','Nursing Leadership and Management',3,'Ward leadership, staffing, quality improvement and clinical governance'),
- ('NUR402','Advanced Clinical Practicum',6,'Supervised consolidation of nursing competencies in clinical settings'),
+ ('NUR 101','Foundations of Nursing Practice',4,'Fundamental nursing procedures, safety, dignity and professional conduct'),
+ ('NUR 102','Health Assessment',4,'Systematic history-taking, physical examination and nursing assessment'),
+ ('NUR 201','Medical-Surgical Nursing I',4,'Nursing management of common adult medical and surgical conditions'),
+ ('NUR 202','Maternal and Newborn Health',4,'Antenatal, intrapartum, postnatal and newborn nursing care'),
+ ('NUR 301','Pediatric Nursing',4,'Nursing care of infants, children and adolescents'),
+ ('NUR 302','Mental Health Nursing',4,'Assessment and nursing care for common mental-health conditions'),
+ ('NUR 401','Nursing Leadership and Management',3,'Ward leadership, staffing, quality improvement and clinical governance'),
+ ('NUR 402','Advanced Clinical Practicum',6,'Supervised consolidation of nursing competencies in clinical settings'),
+ ('NUR 501','Advanced Nursing Research',4,'Advanced research design and evidence-based nursing practice'),
+ ('NUR 502','Specialist Clinical Nursing',5,'Specialist assessment and advanced clinical nursing interventions'),
+ ('NUR 601','Nursing Education and Policy',4,'Curriculum leadership, health policy and professional education'),
+ ('NUR 602','Doctoral Nursing Practicum',6,'Advanced supervised practice, leadership and scholarly integration'),
  ('PHA101','Introduction to Pharmacy Practice',3,'Professional roles, workflows and standards in pharmacy practice'),
  ('PHA102','Pharmaceutics I',4,'Formulation, preparation and quality of common dosage forms'),
  ('PHA201','Pharmaceutical Chemistry',4,'Chemical properties, analysis and stability of medicinal compounds'),
@@ -103,12 +127,22 @@ FROM departments d CROSS JOIN (VALUES
  ('PHA301','Clinical Pharmacy and Therapeutics',5,'Medicine optimization and evidence-based therapeutic decision-making'),
  ('PHA302','Dispensing Practice and Pharmacy Law',4,'Safe dispensing, records, controlled medicines and pharmacy regulation')
 ) AS v(code,name,credits,description)
-WHERE d.name='Administration'
+WHERE d.name='Human Health'
 ON CONFLICT (code) DO NOTHING;
 
-INSERT INTO users (full_name,email,password_hash,role_id,active,version,created_at,updated_at,department_id,must_change_password)
-SELECT 'Frank','admin@educue.local',crypt('ChangeMe@123',gen_salt('bf',10)),r.id,TRUE,0,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP,d.id,TRUE
-FROM roles r CROSS JOIN departments d
-WHERE r.name='ADMIN' AND d.name='Administration'
-ON CONFLICT (email) DO NOTHING;
+UPDATE units
+SET code = regexp_replace(code, '^([A-Z]+)([1-6]0[12])$', E'\\1 \\2'),
+    updated_at = CURRENT_TIMESTAMP
+WHERE code ~ '^[A-Z]+[1-6]0[12]$';
 
+UPDATE units
+SET code = regexp_replace(code, '^([A-Z]+)([1-6]0[12])$', E'\\1 \\2'),
+    updated_at = CURRENT_TIMESTAMP
+WHERE code ~ '^[A-Z]+[1-6]0[12]$';
+
+-- Unit codes keep a subject prefix while the numeric suffix identifies the
+-- course stage: 101/102, 201/202 ... 601/602.
+UPDATE units
+SET code = regexp_replace(code, '^([A-Z]+)([1-6]0[12])$', '\1 \2'),
+    updated_at = CURRENT_TIMESTAMP
+WHERE code ~ '^[A-Z]+[1-6]0[12]$';

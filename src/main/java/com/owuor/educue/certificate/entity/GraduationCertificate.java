@@ -1,4 +1,21 @@
 package com.owuor.educue.certificate.entity;
-import com.owuor.educue.certificate.enums.CertificateStatus;import com.owuor.educue.graduation.entity.GraduationApplication;import jakarta.persistence.*;import lombok.*;import java.time.*;import java.util.*;
-@Entity @Table(name="graduation_certificates",uniqueConstraints={@UniqueConstraint(name="uq_certificate_application",columnNames="graduation_application_id"),@UniqueConstraint(name="uq_certificate_number",columnNames="certificate_number")}) @Getter @Setter @NoArgsConstructor
-public class GraduationCertificate{@Id @GeneratedValue(strategy=GenerationType.IDENTITY)private Long id;@Column(nullable=false,unique=true,updatable=false)private UUID uuid=UUID.randomUUID();@ManyToOne(fetch=FetchType.LAZY,optional=false)@JoinColumn(name="generation_job_id",nullable=false)private CertificateGenerationJob job;@OneToOne(fetch=FetchType.LAZY,optional=false)@JoinColumn(name="graduation_application_id",nullable=false)private GraduationApplication application;@Column(name="certificate_number",unique=true,length=60)private String certificateNumber;@Column(name="verification_code",nullable=false,unique=true,length=60)private String verificationCode=UUID.randomUUID().toString();@Column(name="student_name",nullable=false,length=180)private String studentName;@Column(name="admission_number",nullable=false,length=80)private String admissionNumber;@Column(name="course_code",nullable=false,length=50)private String courseCode;@Column(name="course_name",nullable=false,length=180)private String courseName;@Column(name="award_title",nullable=false,length=180)private String awardTitle;@Column(name="award_classification",length=120)private String awardClassification;@Column(name="graduation_date",nullable=false)private LocalDate graduationDate;@Enumerated(EnumType.STRING)@Column(nullable=false,length=30)private CertificateStatus status=CertificateStatus.PENDING;@Column(name="storage_url",length=1000)private String storageUrl;@Column(name="file_size")private Long fileSize;@Column(name="checksum_sha256",length=64)private String checksumSha256;@Column(name="error_message",length=1000)private String errorMessage;@Column(name="generated_at")private LocalDateTime generatedAt;@Version private Long version;}
+
+import lombok.*;
+
+import java.time.*;
+import java.util.*;
+
+@Getter
+@Setter
+@NoArgsConstructor
+public class GraduationCertificate {
+    private String certificateNumber;
+    private String verificationCode = UUID.randomUUID().toString();
+    private String studentName;
+    private String admissionNumber;
+    private String courseCode;
+    private String courseName;
+    private String awardTitle;
+    private String awardClassification;
+    private LocalDate graduationDate;
+}

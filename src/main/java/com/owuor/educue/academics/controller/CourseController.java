@@ -31,6 +31,11 @@ public class CourseController {
         return courseService.create(req);
     }
 
+    @PutMapping("/{uuid}")
+    public CourseResponse update(@PathVariable UUID uuid, @Valid @RequestBody CreateCourseRequest req) {
+        return courseService.update(uuid, req);
+    }
+
 
     @GetMapping("/{uuid}")
     public CourseResponse getByUuid(@PathVariable UUID uuid) {

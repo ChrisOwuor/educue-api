@@ -442,7 +442,7 @@ public class StudentUnitRegistrationService {
         public List<IntakeOption> hodIntakes(User requester) {
                 Long departmentId = hodDepartment(requester);
                 var spec = (org.springframework.data.jpa.domain.Specification<Enrollment>) (root, query, cb) -> cb.and(
-                                cb.equal(root.get("course").get("department").get("id"), departmentId),
+                                departmentPredicate(root, cb, departmentId),
                                 cb.equal(root.get("status"), com.owuor.educue.students.enums.EnrollmentStatus.ACTIVE));
                 return enrollmentRepository.findAll(spec, Pageable.unpaged()).getContent().stream()
                                 .collect(Collectors.groupingBy(Enrollment::getIntake, LinkedHashMap::new, Collectors.counting()))
@@ -457,7 +457,7 @@ public class StudentUnitRegistrationService {
                 String value = search == null ? "" : search.trim().toLowerCase();
                 var spec = (org.springframework.data.jpa.domain.Specification<Enrollment>) (root, query, cb) -> {
                         var predicates = new ArrayList<jakarta.persistence.criteria.Predicate>();
-                        predicates.add(cb.equal(root.get("course").get("department").get("id"), departmentId));
+                        predicates.add(departmentPredicate(root, cb, departmentId));
                         predicates.add(cb.equal(root.get("intake").get("uuid"), intakeUuid));
                         predicates.add(cb.equal(root.get("status"), com.owuor.educue.students.enums.EnrollmentStatus.ACTIVE));
                         if (!value.isBlank()) predicates.add(cb.or(
@@ -519,7 +519,8 @@ public class StudentUnitRegistrationService {
                 UUID intake = null;
                 for (UUID uuid : new LinkedHashSet<>(uuids)) {
                         Enrollment enrollment = enrollmentRepository.findByUuid(uuid).orElseThrow(() -> new EntityNotFoundException("Student enrollment not found"));
-                        if (!enrollment.getCourse().getDepartment().getId().equals(departmentId)) throw new AccessDeniedException("Student belongs to another department");
+                        Long enrollmentDepartment = enrollment.getDepartment().getId();
+                        if (!enrollmentDepartment.equals(departmentId)) throw new AccessDeniedException("Student belongs to another department");
                         if (enrollment.getStatus() != com.owuor.educue.students.enums.EnrollmentStatus.ACTIVE) throw new IllegalArgumentException("Only active students can be registered");
                         if (intake == null) intake = enrollment.getIntake().getUuid();
                         else if (!intake.equals(enrollment.getIntake().getUuid())) throw new IllegalArgumentException("All selected students must belong to the same intake");
@@ -529,18 +530,14 @@ public class StudentUnitRegistrationService {
         }
 
         private Long hodDepartment(User requester) {
-                if (requester == null || requester.getDepartment() == null) throw new AccessDeniedException("HOD account is not assigned to a department");
                 return requester.getDepartment().getId();
         }
 
-        public List<StudentUnitRegistrationResponse> getAllRegistrations() {
-
-                return registrationRepository
-                                .findByStatusOrderByRegisteredAtDesc(
-                                                RegistrationStatus.ACTIVE)
-                                .stream()
-                                .map(this::toRegistration)
-                                .toList();
+        private jakarta.persistence.criteria.Predicate departmentPredicate(
+                        jakarta.persistence.criteria.Root<Enrollment> root,
+                        jakarta.persistence.criteria.CriteriaBuilder cb,
+                        Long departmentId) {
+                return cb.equal(root.get("department").get("id"), departmentId);
         }
 
         @Transactional(readOnly = true)

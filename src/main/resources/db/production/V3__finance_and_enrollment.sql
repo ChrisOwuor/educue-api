@@ -56,6 +56,7 @@ CREATE TABLE public.enrollments (
     fee_structure_id bigint,
     intake_id bigint NOT NULL,
     student_id bigint NOT NULL,
+    department_id bigint NOT NULL,
     CONSTRAINT enrollments_status_check CHECK (((status)::text = ANY ((ARRAY['ACTIVE'::character varying, 'DEFERRED'::character varying, 'GRADUATED'::character varying, 'WITHDRAWN'::character varying])::text[])))
 );
 
@@ -937,6 +938,11 @@ ALTER TABLE ONLY public.graduation_fee_items
 
 ALTER TABLE ONLY public.enrollments
     ADD CONSTRAINT fkho8mcicp4196ebpltdn9wl6co FOREIGN KEY (course_id) REFERENCES public.courses(id);
+
+ALTER TABLE ONLY public.enrollments
+    ADD CONSTRAINT fk_enrollments_department FOREIGN KEY (department_id) REFERENCES public.departments(id);
+
+CREATE INDEX idx_enrollments_department_id ON public.enrollments (department_id);
 
 --
 -- Name: fee_ledger fkke6nl5tuwje83bdak9um94lng; Type: FK CONSTRAINT; Schema: public; Owner: -

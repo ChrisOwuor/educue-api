@@ -19,27 +19,22 @@ import java.util.*;
 public class GraduationListController {
     private final GraduationListService service;
 
-    @GetMapping("/hod/candidates")
-    @PreAuthorize("hasRole('HOD')")
-    public Page<Candidate> candidates(@AuthenticationPrincipal User u, @RequestParam UUID academicYearUuid, @RequestParam(required = false) String search, @RequestParam(required = false) UUID academicPeriodUuid, @RequestParam(defaultValue = "true") boolean finalYearOnly, Pageable p) {
-        return service.candidates(u, academicYearUuid, search, academicPeriodUuid, finalYearOnly, p);
-    }
-
     @PostMapping("/hod/candidates/{id}/assess")
     @PreAuthorize("hasRole('HOD')")
-    public Entry assess(@AuthenticationPrincipal User u, @PathVariable UUID id, @RequestBody AssessRequest r) {
+    public GraduationCandidateDto assess(@AuthenticationPrincipal User u, @PathVariable UUID id, @RequestBody AssessRequest r) {
         return service.assess(u, r.academicYearUuid(), id);
     }
 
-    @GetMapping("/hod/enrollments/{id}")
+    @DeleteMapping("/hod/candidates/{id}/assessment")
+    @ResponseStatus(org.springframework.http.HttpStatus.NO_CONTENT)
     @PreAuthorize("hasRole('HOD')")
-    public Entry enrollmentDetail(@AuthenticationPrincipal User u, @PathVariable UUID id) {
-        return service.enrollmentDetail(u, id);
+    public void clearAssessment(@AuthenticationPrincipal User user, @PathVariable UUID id) {
+        service.clearAssessment(user, id);
     }
 
     @PostMapping("/hod/entries")
     @PreAuthorize("hasRole('HOD')")
-    public Entry add(@AuthenticationPrincipal User u, @RequestBody AddRequest r) {
+    public GraduationCandidateDto add(@AuthenticationPrincipal User u, @RequestBody AddRequest r) {
         return service.add(u, r);
     }
 
@@ -70,7 +65,7 @@ public class GraduationListController {
 
     @GetMapping("/hod/lists/{listId}/entries")
     @PreAuthorize("hasRole('HOD')")
-    public Page<Entry> hodListEntries(@AuthenticationPrincipal User u, @PathVariable UUID listId, @RequestParam(required = false) String search, Pageable p) {
+    public Page<GraduationCandidateDto> hodListEntries(@AuthenticationPrincipal User u, @PathVariable UUID listId, @RequestParam(required = false) String search, Pageable p) {
         return service.hodListEntries(u, listId, search, p);
     }
 
@@ -113,19 +108,19 @@ public class GraduationListController {
 
     @GetMapping("/me")
     @PreAuthorize("hasRole('STUDENT')")
-    public Entry mine(@AuthenticationPrincipal User u) {
+    public GraduationCandidateDto mine(@AuthenticationPrincipal User u) {
         return service.mine(u);
     }
 
     @PostMapping("/me/confirm")
     @PreAuthorize("hasRole('STUDENT')")
-    public Entry confirm(@AuthenticationPrincipal User u) {
+    public GraduationCandidateDto confirm(@AuthenticationPrincipal User u) {
         return service.confirm(u);
     }
 
     @PatchMapping("/me/details")
     @PreAuthorize("hasRole('STUDENT')")
-    public Entry updateDetails(@AuthenticationPrincipal User u, @RequestBody UpdateDetailsRequest r) {
+    public GraduationCandidateDto updateDetails(@AuthenticationPrincipal User u, @RequestBody UpdateDetailsRequest r) {
         return service.updateDetails(u, r);
     }
 
@@ -133,12 +128,6 @@ public class GraduationListController {
     @PreAuthorize("hasAnyRole('FINANCE','REGISTRAR','ADMIN')")
     public Page<Summary> staffLists(@AuthenticationPrincipal User user, @RequestParam(required = false) UUID academicYearUuid, @RequestParam(required = false) Long departmentId, Pageable p) {
         return service.staffLists(user, academicYearUuid, departmentId, p);
-    }
-
-    @GetMapping("/staff/lists/{listId}/entries")
-    @PreAuthorize("hasAnyRole('FINANCE','REGISTRAR','ADMIN')")
-    public Page<Entry> staffEntries(@AuthenticationPrincipal User user, @PathVariable UUID listId, @RequestParam(required = false) String search, Pageable p) {
-        return service.staffListEntries(user, listId, search, p);
     }
 
     @GetMapping("/staff/lists/{listId}/candidates")
@@ -150,32 +139,46 @@ public class GraduationListController {
 
     @GetMapping("/staff/entries/{id}")
     @PreAuthorize("hasAnyRole('FINANCE','REGISTRAR','ADMIN')")
-    public Entry staffEntry(@AuthenticationPrincipal User user, @PathVariable Long id) {
+    public GraduationCandidateDto staffEntry(@AuthenticationPrincipal User user, @PathVariable Long id) {
         return service.staffEntry(user, id);
     }
 
     @GetMapping("/registrar/entries")
     @PreAuthorize("hasAnyRole('REGISTRAR','ADMIN')")
-    public Page<Entry> entries(@RequestParam(required = false) String search, @RequestParam(required = false) String status, @RequestParam(required = false) UUID academicYearUuid, Pageable p) {
+    public Page<GraduationCandidateDto> entries(@RequestParam(required = false) String search, @RequestParam(required = false) String status, @RequestParam(required = false) UUID academicYearUuid, Pageable p) {
         return service.registrarEntries(search, status, academicYearUuid, p);
     }
 
-    @GetMapping("/registrar/entries/{id}")
+    @GetMapping("/registrar/final-lists")
     @PreAuthorize("hasAnyRole('REGISTRAR','ADMIN')")
-    public Entry entry(@PathVariable Long id) {
-        return service.registrarEntry(id);
+    public Page<Summary> finalLists(@RequestParam(required = false) UUID academicYearUuid,
+                                    @RequestParam(required = false) Long departmentId, Pageable pageable) {
+        return service.registrarFinalLists(academicYearUuid, departmentId, pageable);
+    }
+
+    @GetMapping("/registrar/final-lists/{listId}/candidates")
+    @PreAuthorize("hasAnyRole('REGISTRAR','ADMIN')")
+    public Page<CandidateRow> finalListCandidates(@PathVariable UUID listId,
+                                                  @RequestParam(required = false) String search, Pageable pageable) {
+        return service.registrarFinalCandidates(listId, search, pageable);
+    }
+
+    @GetMapping(value = "/registrar/final-lists/{listId}/pdf", produces = "application/pdf")
+    @PreAuthorize("hasAnyRole('REGISTRAR','ADMIN')")
+    public byte[] finalListPdf(@PathVariable UUID listId) {
+        return service.registrarFinalListPdf(listId);
     }
 
     @PostMapping("/registrar/entries/{id}/approve")
     @PreAuthorize("hasAnyRole('REGISTRAR','ADMIN')")
-    public Entry approve(@AuthenticationPrincipal User u, @PathVariable Long id) {
+    public GraduationCandidateDto approve(@AuthenticationPrincipal User u, @PathVariable Long id) {
         return service.approve(u, id);
     }
 
-    @GetMapping(value = "/registrar/entries/{id}/certificate", produces = "application/pdf")
+    @PostMapping(value = "/registrar/entries/{id}/certificate", produces = "application/pdf")
     @PreAuthorize("hasAnyRole('REGISTRAR','ADMIN')")
-    public byte[] certificate(@PathVariable Long id) {
-        return service.certificate(id);
+    public byte[] certificate(@AuthenticationPrincipal User registrar, @PathVariable Long id) {
+        return service.printCertificate(registrar, id);
     }
 
     @GetMapping(value = "/registrar/booklet", produces = "application/pdf")

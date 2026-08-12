@@ -21,7 +21,7 @@ public record UserResponse(
                 user.getRole().getName(),
                 user.getUsername(),
                 user.getAvatarUrl() == null ? defaultAvatarUrl : user.getAvatarUrl(),
-                user.getDepartment() == null ? null : user.getDepartment().getName()
+                user.getDepartment().getName()
         );
     }
 }
