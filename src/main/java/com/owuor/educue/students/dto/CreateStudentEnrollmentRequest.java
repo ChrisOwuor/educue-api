@@ -15,7 +15,6 @@ public record CreateStudentEnrollmentRequest(
         @Size(max = 150)
         String fullName,
 
-        @NotBlank
         @Email
         @Size(max = 150)
         String email,

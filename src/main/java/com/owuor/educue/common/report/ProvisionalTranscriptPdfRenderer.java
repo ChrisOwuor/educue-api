@@ -25,7 +25,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class ProvisionalTranscriptPdfRenderer {
 
-    private final InstitutionPdfHeaderRenderer headerRenderer;
+    private final InstitutionPdfHeaderRendererBase headerRenderer;
     private final TranscriptPdfSections sections;
 
     public byte[] render(

@@ -6,7 +6,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.draw.LineSeparator;
 import com.owuor.educue.academics.service.PdfFooterPageEvent;
-import com.owuor.educue.common.report.InstitutionPdfHeaderRenderer;
+import com.owuor.educue.common.report.InstitutionPdfHeaderRendererBase;
 import com.owuor.educue.graduation.entity.GraduationCandidate;
 import com.owuor.educue.graduation.entity.GraduationList;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +27,7 @@ import static com.owuor.educue.common.report.PdfReportHelper.safe;
 public class ProvisionalGraduationListPdfRenderer {
     private static final Color BORDER = new Color(80, 80, 80);
     private static final Color MUTED = new Color(85, 85, 85);
-    private final InstitutionPdfHeaderRenderer headerRenderer;
+    private final InstitutionPdfHeaderRendererBase headerRenderer;
 
     public byte[] render(GraduationList list, List<GraduationCandidate> candidates) {
         return render(list, candidates, false);

@@ -17,8 +17,8 @@ import java.util.regex.Pattern;
 public class MpesaC2bRegistrationService {
     private final MpesaDarajaClient darajaClient;
 
-    @Value("${app.public-base-url}")
-    private String publicBaseUrl;
+    @Value("${app.frontend-base-url}")
+    private String frontendBaseUrl;
 
     @Value("${app.mpesa.c2b-short-code}")
     private String shortCode;
@@ -27,7 +27,7 @@ public class MpesaC2bRegistrationService {
     private String callbackToken;
 
     public C2bUrlRegistrationResponse register() {
-        String callbackBase = normalizePublicBaseUrl(publicBaseUrl)
+        String callbackBase = normalizePublicBaseUrl(frontendBaseUrl)
                 + "/api/gateway/v2/transaction/" + callbackToken;
         String validationUrl = callbackBase + "/validation";
         String confirmationUrl = callbackBase + "/confirmation";
@@ -84,14 +84,14 @@ public class MpesaC2bRegistrationService {
 
     private String normalizePublicBaseUrl(String value) {
         if (value == null || value.isBlank()) {
-            throw new IllegalStateException("PUBLIC_BASE_URL must be configured before registering M-PESA URLs");
+            throw new IllegalStateException("FRONTEND_BASE_URL must be configured before registering M-PESA URLs");
         }
         String normalized = value.trim().replaceAll("/+$", "");
         if (!normalized.startsWith("https://")) {
-            throw new IllegalStateException("PUBLIC_BASE_URL must use HTTPS");
+            throw new IllegalStateException("FRONTEND_BASE_URL must use HTTPS");
         }
         if (normalized.contains("localhost") || normalized.contains("127.0.0.1")) {
-            throw new IllegalStateException("PUBLIC_BASE_URL must be publicly reachable by Safaricom");
+            throw new IllegalStateException("FRONTEND_BASE_URL must be publicly reachable by Safaricom");
         }
         return normalized;
     }

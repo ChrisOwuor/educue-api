@@ -48,7 +48,9 @@ public record StudentProfileResponse(
 
         String enrollmentStatus,
 
-        LocalDate admissionDate
+        LocalDate admissionDate,
+
+        boolean profileCompletionRequired
 
 ) {
 }

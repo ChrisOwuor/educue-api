@@ -46,7 +46,10 @@ public class StudentOnboardingService {
     public CreatedStudentEnrollmentResponse create(CreateStudentEnrollmentRequest request) {
         validateFinancialPosition(request);
         String admissionNumber = request.admissionNumber().trim().toUpperCase(Locale.ROOT);
-        String email = request.email().trim().toLowerCase(Locale.ROOT);
+        boolean requiresProfileCompletion = Boolean.TRUE.equals(request.migrated());
+        String email = request.email() == null || request.email().isBlank()
+                ? migrationPlaceholderEmail(admissionNumber)
+                : request.email().trim().toLowerCase(Locale.ROOT);
         if (studentRepository.findByAdmissionNumberIgnoreCase(admissionNumber).isPresent())
             throw new IllegalArgumentException("Admission number already exists");
         if (userRepository.existsByEmail(email)) throw new IllegalArgumentException("Portal email already exists");
@@ -104,6 +107,7 @@ public class StudentOnboardingService {
         student.setDateOfBirth(request.dateOfBirth());
         student.setGuardianName(clean(request.guardianName()));
         student.setGuardianPhone(clean(request.guardianPhone()));
+        student.setProfileCompletionRequired(requiresProfileCompletion);
         student = studentRepository.save(student);
 
         Enrollment enrollment = new Enrollment();
@@ -172,5 +176,10 @@ public class StudentOnboardingService {
 
     private String clean(String value) {
         return value == null || value.isBlank() ? null : value.trim();
+    }
+
+    private String migrationPlaceholderEmail(String admissionNumber) {
+        return "migration-" + admissionNumber.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "-")
+                + "@placeholder.educue.local";
     }
 }
