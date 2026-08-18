@@ -1,6 +1,7 @@
 package com.owuor.educue.students.controller;
 
 import com.owuor.educue.students.dto.StudentProfileResponse;
+import com.owuor.educue.students.dto.CompleteStudentProfileRequest;
 import com.owuor.educue.finance.dto.FeeLedgerResponse;
 import com.owuor.educue.finance.service.PeriodFeeStructureService;
 import com.owuor.educue.students.service.StudentProfileService;
@@ -10,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.HttpHeaders;
@@ -34,6 +37,15 @@ public class StudentProfileController {
         return ResponseEntity.ok(studentProfileService.getMyProfile(
                 currentUser.getId()
         ));
+    }
+
+    @PreAuthorize("hasRole('STUDENT')")
+    @PutMapping("/me/profile-completion")
+    public ResponseEntity<StudentProfileResponse> completeMyProfile(
+            @AuthenticationPrincipal User currentUser,
+            @jakarta.validation.Valid @RequestBody CompleteStudentProfileRequest request
+    ) {
+        return ResponseEntity.ok(studentProfileService.completeMyProfile(currentUser.getId(), request));
     }
 
     @PreAuthorize("hasRole('STUDENT')")

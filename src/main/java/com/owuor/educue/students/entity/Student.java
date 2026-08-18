@@ -47,6 +47,9 @@ public class Student {
     @Column(name = "guardian_phone", length = 20)
     private String guardianPhone;
 
+    @Column(name = "profile_completion_required", nullable = false)
+    private boolean profileCompletionRequired;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 

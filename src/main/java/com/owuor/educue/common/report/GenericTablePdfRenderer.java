@@ -18,7 +18,7 @@ import static com.owuor.educue.common.report.PdfReportHelper.*;
 @RequiredArgsConstructor
 public class GenericTablePdfRenderer {
 
-    private final InstitutionPdfHeaderRenderer headerRenderer;
+    private final InstitutionPdfHeaderRendererBase headerRenderer;
 
     public byte[] render(
             String title,

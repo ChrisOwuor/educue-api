@@ -6,7 +6,7 @@ import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.owuor.educue.academics.service.PdfFooterPageEvent;
 import com.owuor.educue.admissions.entity.Application;
-import com.owuor.educue.common.report.InstitutionPdfHeaderRenderer;
+import com.owuor.educue.common.report.InstitutionPdfHeaderRendererBase;
 import com.owuor.educue.finance.service.PeriodFeeItemService;
 import com.owuor.educue.students.entity.Enrollment;
 import com.owuor.educue.finance.service.InstitutionFinanceConfigurationService;
@@ -21,7 +21,7 @@ import java.time.LocalDate;
 
 @Service @RequiredArgsConstructor
 public class AdmissionPackPdfService {
-    private final InstitutionPdfHeaderRenderer headerRenderer;
+    private final InstitutionPdfHeaderRendererBase headerRenderer;
     private final InstitutionFinanceConfigurationService financeConfigurationService;
     private final PeriodFeeItemService periodFeeItemService;
 

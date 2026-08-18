@@ -14,10 +14,6 @@ import java.util.UUID;
         name = "academic_periods",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_academic_period_code",
-                        columnNames = {"code"}
-                ),
-                @UniqueConstraint(
                         name = "uk_academic_period_type_year_number",
                         columnNames = {
                                 "period_type",
@@ -63,7 +59,7 @@ public class AcademicPeriod {
      * Y1T1
      * Y1M1
      */
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(nullable = false, length = 20)
     private String code;
 
     /*

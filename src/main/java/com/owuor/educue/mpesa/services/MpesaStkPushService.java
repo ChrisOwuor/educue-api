@@ -35,8 +35,8 @@ public class MpesaStkPushService {
     private String shortCode;
     @Value("${app.mpesa.stk-passkey}")
     private String passkey;
-    @Value("${app.public-base-url}")
-    private String publicBaseUrl;
+    @Value("${app.frontend-base-url}")
+    private String frontendBaseUrl;
     @Value("${app.mpesa.stk-callback-token}")
     private String callbackToken;
     @Value("${app.mpesa.phone-hash-pepper}")
@@ -65,7 +65,7 @@ public class MpesaStkPushService {
                     Map.entry("Timestamp", timestamp), Map.entry("TransactionType", "CustomerPayBillOnline"),
                     Map.entry("Amount", amount.toBigIntegerExact()), Map.entry("PartyA", phone),
                     Map.entry("PartyB", shortCode), Map.entry("PhoneNumber", phone),
-                    Map.entry("CallBackURL", publicBaseUrl + "/api/gateway/v1/transaction/" + callbackToken + "/notify"),
+                    Map.entry("CallBackURL", frontendBaseUrl + "/api/gateway/v1/transaction/" + callbackToken + "/notify"),
                     Map.entry("AccountReference", enrollment.getStudent().getAdmissionNumber()),
                     Map.entry("TransactionDesc", "Student fees")));
             return applyDarajaResponse(request.getId(), response);

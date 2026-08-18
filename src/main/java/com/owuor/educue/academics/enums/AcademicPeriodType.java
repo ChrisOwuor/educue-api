@@ -3,7 +3,7 @@ package com.owuor.educue.academics.enums;
 public enum AcademicPeriodType {
     SEMESTER("S", "Semester"),
     TERM("T", "Term"),
-    TRIMESTER("TR", "Trimester"),
+    TRIMESTER("S", "Semester"),
     MODULE("M", "Module"),
     QUARTER("Q", "Quarter"),
     BLOCK("B", "Block");
